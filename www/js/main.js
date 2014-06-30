@@ -1,7 +1,8 @@
 (function(){
 	"use strict";
 	var onready = [],
-		req = new XMLHttpRequest();
+		req = new XMLHttpRequest(),
+		startfn = function(){};
 	function Module(obj,name){
 		for(var i in obj){
 			try{
@@ -35,19 +36,14 @@
 			debug: true
 		},
 		version: 'git-'+now(),
-		start: function(){
-			global.console.debug('EVENT - start');
-			global.ready(function(){
-				global.dom.get('body').css({
-					margin: 0,
-					padding: 0,
-					overflow: 'hidden'
-				});
-				global.game.start();
-			},[
-				'game'
-			]);
-			global.ready();
+		start: function(callback){
+			if(callback === undefined){
+				global.console.debug('EVENT - start');
+				startfn.call(this);
+				global.ready();
+			}else{
+				startfn = callback;
+			}
 		},
 		now: now,
 		require: function(source,callback,depends){
@@ -222,24 +218,22 @@
 	// Load settings
 	req.onload = function(){
 		global.settings = req.response;
+		var scripts = global.settings.load;
+		console.log(scripts);
+		global.fingerprint = global.fingerprint();
+		var count = 0,
+			ready = function(){
+				count++;
+				if(count == scripts.length){
+					global.start();
+				}
+			},
+			i;
+		for(i in scripts){
+			global.require('js/'+scripts[i]+'.js',ready);
+		}
 	};
 	req.open('GET','etc/settings.json',true);
 	req.responseType = 'json';
-	req.onload = function(){
-		window.onload = function(){
-			global.fingerprint = global.fingerprint();
-			var count = 0,
-				ready = function(){
-					count++;
-					if(count == settings.load.length){
-						global.start();
-					}
-				},
-				i;
-			for(i in settings.load){
-				global.require('js/'+settings.load[i]+'.js',ready);
-			}
-		};
-	};
 	req.send();
 })();
