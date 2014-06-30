@@ -13,7 +13,7 @@ exports.start = function(folder,port,host){
 	});
 	return http.createServer(function(req,res){
 		//if(!toobusy()){
-			if(req.url == '/etc/settings.json'){
+			if(req.url == '/etc/client.json'){
 				console.log('Serving client settings');
 				res.writeHead(200,{
 					"Content-Type": 'application/json'
