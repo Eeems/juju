@@ -219,7 +219,6 @@
 	req.onload = function(){
 		global.settings = req.response;
 		var scripts = global.settings.load;
-		console.log(scripts);
 		global.fingerprint = global.fingerprint();
 		var count = 0,
 			ready = function(){
