@@ -22,8 +22,39 @@ global.ready(function(){
 					if(typeof fn == 'function'){
 						this.onupdate = fn;
 					}else{
-						this.context = this.canvas[0].getContext('2d');
 						this.onupdate.apply(this,arguments);
+						var i,c;
+						for(i=0;i<this.children.length;i++){
+							c = this.children[i];
+							switch(c.type){
+								case 'sprite':
+									this.sprite(c.sprite,c.x,c.y,c.width,c.height);
+								break;
+								case 'text':
+									if(c.draw == 'fill'){
+										this.style({
+											fillStyle: c.colour
+										}).text(c.text,c.x,c.y,c.width);
+									}else{
+										this.style({
+											strokeStyle: c.colour
+										});
+										this.context.strokeText(c.text,c.x,c.y.c.width);
+									}
+								break;
+								default:
+									this.rect(c.x,c.y,c.width,c.height);
+									if(c.draw == 'fill'){
+										this.style({
+											fillStyle: c.colour
+										}).fill();
+									}else{
+										this.style({
+											strokeStyle: c.colour
+										}).stroke();
+									}
+							}
+						}
 					}
 					return this;
 				},
@@ -66,8 +97,8 @@ global.ready(function(){
 				clear: function(x,y,w,h){
 					x = x|0;
 					y = y|0;
-					w = w|this.width();
-					h = h|this.height();
+					w = w===undefined?this.width():w;
+					h = h===undefined?this.height():h;
 					this.context.clearRect(x,y,w,h);
 					return this;
 				},
@@ -81,35 +112,41 @@ global.ready(function(){
 				},
 				width: function(w){
 					if(w===undefined){
-						return this.canvas[0].width;
+						return this.canvas.width();
 					}else{
-						this.canvas[0].width = w;
-						this.context = this.canvas[0].getContext('2d');
+						this.canvas.width(w);
 						return this;
 					}
 				},
 				height: function(h){
 					if(h===undefined){
-						return this.canvas[0].height;
+						return this.canvas.height();
 					}else{
-						this.canvas[0].height = h;
-						this.context = this.canvas[0].getContext('2d');
+						this.canvas.height(h);
 						return this;
 					}
+				},
+				rect: function(x,y,w,h){
+					x = x|0;
+					y = y|0;
+					w = w===undefined?this.width():w;
+					h = h===undefined?this.height():h;
+					this.context.rect(x,y,w,h);
+					return this;
 				},
 				fillRect: function(x,y,w,h){
 					x = x|0;
 					y = y|0;
-					w = w|this.width();
-					h = h|this.height();
+					w = w===undefined?this.width():w;
+					h = h===undefined?this.height():h;
 					this.context.fillRect(x,y,w,h);
 					return this;
 				},
 				strokeRect: function(x,y,w,h){
 					x = x|0;
 					y = y|0;
-					w = w|this.width();
-					h = h|this.height();
+					w = w===undefined?this.width():w;
+					h = h===undefined?this.height():h;
 					this.context.strokeRect(x,y,w,h);
 					return this;
 				},
@@ -136,28 +173,81 @@ global.ready(function(){
 					x = x|0;
 					y = y|0;
 					if(typeof img == 'string'){
+						var layer = this;
 						img = dom.create('img').attr({
 							src: img+'?v='+version
 						}).on('load',function(){
-							this.sprite(this,x,y,w,h);
+							layer.sprite(this,x,y,w,h);
 						});
 					}else{
 						img = img instanceof Nodes?img[0]:img;
+						w = w===undefined?img.width:w;
+						h = h===undefined?img.height:h;
 						this.context.drawImage(img,x,y,w,h);
 					}
 					return this;
 				},
-				add: function(options){
-
+				measureText: function(){
+					return this.context.measureText.apply(this.context,arguments);
+				},
+				children: [],
+				add: function(attributes){
+					if(attributes.name === '' || this.get(attributes.name) === undefined){
+						return this.children[this.children.push(new Object(attributes))-1];
+					}
+					return false;
 				},
 				get: function(i){
-
+					if(typeof i == 'string'){
+						for(var ii=0;ii<this.children.length;ii++){
+							if(i == this.children[ii].name){
+								return this.children[ii];
+							}
+						}
+					}else if(typeof i == 'number'){
+						return this.children[i];
+					}
+					return undefined;
 				},
 				drop: function(i){
-
+					this.children.splice(i,1);
+					return this;
 				}
 			});
 		}
+	}
+	function Object(attributes){
+		var i,a,defaults = {
+			type: 'rectangle',
+			width: undefined,
+			height: undefined,
+			colour: 'black',
+			draw: 'fill',
+			x: 0,
+			y: 0,
+			name: '',
+			text: ''
+		};
+		for(i in defaults){
+			this[i] = defaults[i];	
+		}
+		for(i in attributes){
+			a = attributes[i];
+			switch(i){
+				case 'color':case 'colour':
+					this.colour = a;
+				break;
+				case 'draw':
+					if(a != 'fill' || a != 'stroke'){
+						break;
+					}
+				case 'width':case 'height':case 'type':
+				case 'x':case 'y':case 'name':
+					this[i] = a;
+				break;
+			}
+		}
+		return this;
 	}
 	var stack = [],
 		parents = [];

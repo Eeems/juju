@@ -175,6 +175,7 @@ global.ready(function(){
 					return global.dom.get(document.createElement(tag));
 				},
 				get: function(selector){
+					console.debug('DOM - GET '+selector);
 					return new Nodes(document).get(selector);
 				},
 				fragment: function(){

@@ -34,6 +34,17 @@ exports.start = function(folder,port,host){
 						res.end("{\"debug\": false}");
 					}
 				});
+			}else if(req.url.substr(0,7) == '/debug/'){
+				var type = req.url.substr(7,req.url.indexOf('/',7)-7),
+					data = decodeURIComponent(req.url.substr(req.url.indexOf('/',7)+1));
+				switch(type){
+					case 'log':
+						console.log('DEBUG - '+data);
+					break;
+					default:
+						console.log('DEBUG('+type+') - '+data);
+				}
+				res.end();
 			}else{
 				console.log('Serving '+req.url);
 				file.serve(req,res);
