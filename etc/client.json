@@ -1,12 +1,3 @@
 {
-	"debug": true,
-	"load":[
-		"console",
-		"dom",
-		"keyboard",
-		"canvas",
-		"sandbox",
-		"ajax",
-		"screen"
-	]
+	"debug": true
 }

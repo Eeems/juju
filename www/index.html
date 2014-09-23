@@ -2,7 +2,14 @@
 <html>
 	<head>
 		<meta charset="utf-8"/>
-		<script src="js/main.js"></script>
+		<!-- core must be included first, everything else will resolve dependencies with global.require(); -->
+		<script src="js/core.js"></script>
+		<script src="js/console.js"></script>
+		<script src="js/sandbox.js"></script>
+		<script src="js/ajax.js"></script>
+		<script src="js/keyboard.js"></script>
+		<script src="js/dom.js"></script>
+		<script src="js/screen.js"></script>
 	</head>
 	<body>
 	</body>

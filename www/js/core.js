@@ -30,8 +30,8 @@
 			return a&a;
 		},0);
 	}
-	window.Module = Module
-;	window.global = new Module({
+	window.Module = Module;
+	window.global = new Module({
 		settings: {	// default initializing settings
 			debug: true
 		},
@@ -46,36 +46,6 @@
 			}
 		},
 		now: now,
-		require: function(source,callback,depends){
-			var i,
-				count=0;
-			depends = depends === undefined?[]:depends;
-			for(i=0;i<depends.length;i++){
-				if(global._scripts.indexOf(depends[i]) != -1){
-					count++;
-				}
-			}
-			if(count == depends.length){
-				if(global.settings.debug){
-					console.log('EVENT - REQUIRE '+source);
-				}
-				var script = document.createElement('script');
-				script.src = source+'?v='+global.version;
-				script.onload = function(){
-					global._scripts.push(source);
-					callback.apply(this,arguments);
-				};
-				document.head.appendChild(script);
-			}else{
-				if(global.settings.debug){
-					console.log('DEFFERRED - REQUIRE '+source);
-				}
-				setTimeout(function(){
-					global.require.apply(this,arguments);
-				},10);
-			}
-			return this;
-		},
 		register: function(name){
 			if(global._modules.indexOf(name) == -1){
 				global.console.debug('EVENT - MODULE REGISTERED '+name);
@@ -86,7 +56,7 @@
 		ready: function(callback,depends){
 			if(arguments.length > 0){
 				var hash = global.hash(callback+'');
-				global.console.debug('READY SCRIPT - ADD '+hash);
+				console.debug('READY SCRIPT - ADD '+hash);
 				onready.push({
 					fn: callback,
 					deps: depends===undefined?[]:depends,
@@ -218,19 +188,8 @@
 	// Load settings
 	req.onload = function(){
 		global.settings = req.response;
-		var scripts = global.settings.load;
 		global.fingerprint = global.fingerprint();
-		var count = 0,
-			ready = function(){
-				count++;
-				if(count == scripts.length){
-					global.start();
-				}
-			},
-			i;
-		for(i in scripts){
-			global.require('js/'+scripts[i]+'.js',ready);
-		}
+		global.ready();
 	};
 	req.open('GET','etc/settings.json',true);
 	req.responseType = 'json';

@@ -14,12 +14,16 @@ global.ready(function(){
 					console.debug('AJAX - CREATING REQUEST FOR '+args.url);
 					console.debug('AJAX - TYPE '+args.type);
 					console.debug('AJAX - responseType '+args.responseType);
-					var req = new XMLHttpRequest();
+					var req = new XMLHttpRequest(),
+						i;
 					req.onload = function(){
-						var res = req.responseType === ''?req.responseText:req.response;
-						callback.call(req,res,req.status);
+						callback.call(
+							req,
+							req.responseType===''?req.responseText:req.response,
+							req.status
+						);
 					};
-					for(var i in args.headers){
+					for(i in args.headers){
 						console.debug('AJAX - ADDING HEADER - '+i+': '+args.headers[i]);
 						req.setRequestHeader(i,args.headers[i]);
 					}
@@ -50,5 +54,5 @@ global.ready(function(){
 	}
 },[
 	'console',
-	'sandbox',
+	'sandbox'
 ]);
