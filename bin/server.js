@@ -87,14 +87,23 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 				case 'PING':
 					ws.send('PONG '+data);
 				break;
+				case 'PONG':
+					console.log('SOCKET PING - '+ws.fingerprint+' - '+((+new Date)-parseInt(data))+'ms');
+				break;
 			}
 		});
 		ws.on('close',function(){
 			if(ws.fingerprint !== undefined){
 				wss.broadcast('QUIT '+ws.fingerprint);
 			}
+			if(ws.timeout !== undefined){
+				clearInterval(ws.timeout);
+			}
 			sockets.splice(sockets.indexOf(ws),1);
 		});
+		ws.timeout = setInterval(function(){
+			ws.send('PING '+(+new Date));
+		},10000);
 	});
 	return {
 		server: server,
