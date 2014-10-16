@@ -61,7 +61,9 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 		}).listen(port,host,2048);
 	wss.broadcast = function(data){
 		for(var i in sockets){
-			sockets[i].send(data);
+			if(sockets[i].readyState == ws.OPEN){
+				sockets[i].send(data);
+			}
 		}
 	};
 	wss.on('connection',function(ws){
@@ -81,6 +83,9 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 					ws.fingerprint = data;
 					sockets.push(ws);
 					wss.broadcast('JOIN '+data);
+				break;
+				case 'PING':
+					ws.send('PONG '+data);
 				break;
 			}
 		});

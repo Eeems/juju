@@ -11,7 +11,19 @@ global.ready(function(undefined){
 		ctx = global.extend(mask,context);
 		ctx = global.extend(ctx,{
 			Math: window.Math,
-			console: console
+			console: console,
+			setInterval: function(){
+				return window.setInterval.apply(window,arguments);
+			},
+			setTimeout: function(){
+				return window.setTimeout.apply(window,arguments);
+			},
+			clearInterval: function(){
+				return window.clearInterval.apply(window,arguments);
+			},
+			clearTimeout: function(){
+				return window.clearTimeout.apply(window,arguments);
+			}
 		});
 		// Handle the two normal global viariable names.
 		ctx.window = ctx;
