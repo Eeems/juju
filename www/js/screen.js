@@ -76,7 +76,7 @@ global.ready(function(){
 					if(typeof fn == 'function'){
 						handlers.update = fn;
 					}else{
-						fps = 1/((new Date().getTime() - lasttick)/1000);
+						fps = 1/((new Date().getTime()-lasttick)/1000);
 						average.push(fps);
 						if(average.length > 50){
 							average.shift();
@@ -114,6 +114,5 @@ global.ready(function(){
 		global.screen.play();
 	}
 },[
-	'console',
 	'dom'
 ]);

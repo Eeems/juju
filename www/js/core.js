@@ -38,7 +38,7 @@
 		version: 'git-'+now(),
 		start: function(callback){
 			if(callback === undefined){
-				global.console.debug('EVENT - start');
+				console.debug('EVENT - start');
 				startfn.call(this);
 				global.ready();
 			}else{
@@ -48,7 +48,7 @@
 		now: now,
 		register: function(name){
 			if(global._modules.indexOf(name) == -1){
-				global.console.debug('EVENT - MODULE REGISTERED '+name);
+				console.debug('EVENT - MODULE REGISTERED '+name);
 				global._modules.push(name);
 			}
 		},
@@ -77,7 +77,7 @@
 							}
 							if(count == deps.length){
 								var script = onready.shift();
-								global.console.debug('READY SCRIPT - RUN '+script.name);
+								console.debug('READY SCRIPT - RUN '+script.name);
 								script.fn.apply(this);
 							}else{
 								onready.push(onready.shift());

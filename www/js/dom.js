@@ -185,7 +185,4 @@ global.ready(function(){
 			},'dom')
 		});
 	}
-},[
-	'console',
-	'sandbox'
-]);
+},[]);

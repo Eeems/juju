@@ -349,7 +349,6 @@ global.ready(function(){
 		Canvas: Canvas
 	});
 },[
-	'console',
 	'dom',
 	'sandbox',
 	'screen'

@@ -10,7 +10,8 @@ global.ready(function(undefined){
 		// create the context from the mask
 		ctx = global.extend(mask,context);
 		ctx = global.extend(ctx,{
-			Math: window.Math
+			Math: window.Math,
+			console: console
 		});
 		// Handle the two normal global viariable names.
 		ctx.window = ctx;
@@ -54,6 +55,4 @@ global.ready(function(undefined){
 			}
 		},'sandbox')
 	});
-},[
-	'console'
-]);
+},[]);

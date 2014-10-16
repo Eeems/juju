@@ -15,7 +15,8 @@
 		"node": ">=0.10"
 	},
 	"dependencies":{
-		"node-static": "0.7.x"
+		"node-static": "0.7.x",
+		"ws": "0.4.x"
 	},
 	"devDependencies": {
 		"tape": "2.x"
