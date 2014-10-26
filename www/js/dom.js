@@ -50,7 +50,11 @@ global.ready(function(){
 							console.debug('DOM - APPEND - PARENT: '+this.tagName);
 							for(var i in args){
 								console.debug('DOM - APPEND - CHILD: '+args[i]);
-								this.appendChild(args[i]);
+								if(typeof args[i] == 'string'){
+									this.innerHTML += args[i];
+								}else{
+									this.appendChild(args[i]);
+								}
 							}
 						}catch(e){
 							console.warn(e);
@@ -99,6 +103,33 @@ global.ready(function(){
 						}
 					});
 					return this;
+				},
+				text: function(text){
+					console.debug('DOM - TEXT');
+					if(text !== undefined){
+						this.each(function(){
+							this.textContent = text;
+						});
+						return this;
+					}else{
+						return this[0].textContent;
+					}
+				},
+				html: function(html){
+					if(html !== undefined){
+						this.each(function(){
+							var self = new Nodes(this);
+							if(html instanceof Nodes){
+								self.drop('*');
+								self.append(html);
+							}else{
+								this.innerHTML = html;
+							}
+						});
+						return this;
+					}else{
+						return this[0].innerHTML;
+					}
 				},
 				fire: function(event){
 					console.debug('DOM - FIRE/'+event);

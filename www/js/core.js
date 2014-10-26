@@ -25,10 +25,12 @@
 		return +new Date;
 	}
 	function hash(val){
-		return val.split("").reduce(function(a,b){
-			a=((a<<5)-a)+b.charCodeAt(0);
-			return a&a;
-		},0);
+		return (val+'')
+			.split('')
+			.reduce(function(a,b){
+				a=((a<<5)-a)+b.charCodeAt(0);
+				return a&a;
+			},0);
 	}
 	window.Module = Module;
 	window.global = new Module({
@@ -173,6 +175,9 @@
 						break;
 						default:
 							out = input;
+					}
+					if(out === null){
+						out = 0;
 					}
 					return out.toString(16);
 				};

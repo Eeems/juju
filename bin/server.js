@@ -4,10 +4,10 @@ var fs = require('fs'),
 	ws = require('ws'),
 	config = require('../etc/server.json');
 process.chdir(__dirname+'/..');
-console.log('Running from context '+process.cwd());
+console.log('Running from context %s',process.cwd());
 exports.start = function(folder,port,host,ws_host,ws_port){
-	console.log('Starting server for '+folder+' on '+host+':'+port);
-	console.log('Starting websocket server on '+ws_host+':'+ws_port);
+	console.log('Starting server for %s on %s:%d',folder,host,port);
+	console.log('Starting websocket server on %s:%d',ws_host,ws_port);
 	var file = new app.Server(folder,{
 			gzip: true,
 			serverInfo: 'juju/node-static/0.0.1'
@@ -50,6 +50,15 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 					case 'log':
 						console.log('DEBUG - %s',data);
 					break;
+					case 'sockets':
+						var s = [],
+							i;
+						for(i in sockets){
+							s.push(sockets[i].fingerprint);
+						}
+						console.log(sockets.length);
+						res.write(JSON.stringify(s));
+					break;
 					default:
 						console.log('DEBUG(%s) - %s',type,data);
 				}
@@ -88,7 +97,7 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 					ws.send('PONG '+data);
 				break;
 				case 'PONG':
-					console.log('SOCKET PING - '+ws.fingerprint+' - '+((+new Date)-parseInt(data))+'ms');
+					console.log('SOCKET PING - %s - %dms',ws.fingerprint,((+new Date)-parseInt(data)));
 				break;
 			}
 		});
@@ -112,5 +121,8 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 };
 
 if(!module.parent){
-	exports.start(config.data,config.port,config.host,config['ws-host'],config['ws-port']);
+	global.ws = exports.start(config.data,config.port,config.host,config['ws-host'],config['ws-port']);
+	// require('repl').start({
+	// 	useGlobal: true
+	// });
 }

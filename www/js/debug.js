@@ -6,6 +6,10 @@ global.ready(function(){
 				log: function(message,callback){
 					ajax.get('debug/log/'+encodeURIComponent(message),callback);
 					return this;
+				},
+				sockets: function(callback){
+					ajax.get('debug/sockets/',callback);
+					return this;
 				}
 			},'debug'),
 		});
