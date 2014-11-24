@@ -31,7 +31,7 @@ global.ready(function(){
 				prop = function(name){
 					Object.defineProperty(self,name,{
 						get: function(){
-							return ws[name];
+							return ws===undefined?undefined:ws[name];
 						}
 					});
 				};

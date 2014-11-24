@@ -3,8 +3,8 @@ global.ready(function(){
 		extend(global,{
 			ajax: new Module({
 				ajax: function(args,callback){
-					args = extend(
-{						headers: {},
+					args = extend({
+						headers: {},
 						type: 'GET',
 						data: null,
 						responseType: ''
