@@ -5,27 +5,6 @@ var fs = require('fs'),
 	config = require('../etc/server.json');
 process.chdir(__dirname+'/..');
 console.log('Running from context %s',process.cwd());
-exports.handle = global.handle = {
-	_handles: [],
-	add: function(name,callback,scope){
-		this._handles[name.toUpperCase()] = function(){
-			var r = callback.apply(this,arguments);
-			return r === undefined?'':r;
-		};
-		return this;
-	},
-	get: function(name){
-		var f = this._handles[name.toUpperCase()];
-		return f===undefined?function(data){
-			console.log('DEBUG(%s) - %s',name,data);
-			return '';
-		}:f;
-	},
-	run: function(name,data,scope){
-		return this.get(name).call(scope,data);
-	}
-};
-exports.sockets = global.sockets = sockets = [];
 exports.start = function(folder,port,host,ws_host,ws_port){
 	console.log('Starting server for %s on %s:%d',folder,host,port);
 	console.log('Starting websocket server on %s:%d',ws_host,ws_port);
@@ -33,6 +12,27 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 			gzip: true,
 			serverInfo: 'juju/node-static/0.0.1'
 		}),
+		sockets = [],
+		handle = {
+			_handles: [],
+			add: function(name,callback,scope){
+				this._handles[name.toUpperCase()] = function(){
+					var r = callback.apply(this,arguments);
+					return r === undefined?'':r;
+				};
+				return this;
+			},
+			get: function(name){
+				var f = this._handles[name.toUpperCase()];
+				return f===undefined?function(data){
+					console.log('DEBUG(%s) - %s',name,data);
+					return '';
+				}:f;
+			},
+			run: function(name,data,scope){
+				return this.get(name).call(scope,data);
+			}
+		},
 		wss = new ws.Server({
 			host: ws_host,
 			port: ws_port
@@ -84,9 +84,7 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 		console.log('SOCKET OPENED');
 		ws.on('message',function(msg){
 			console.log('SOCKET DEBUG: %s',msg);
-			var data = msg.substr(msg.indexOf(' ')+1),
-				i;
-			handle.run(msg.substr(0,msg.indexOf(' ')),data,ws);
+			handle.run(msg.substr(0,msg.indexOf(' ')),msg.substr(msg.indexOf(' ')+1),ws);
 		});
 		ws.on('close',function(){
 			if(ws.fingerprint !== undefined){
@@ -106,15 +104,22 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 		console.log('SOCKET CONNECTION COUNT: '+sockets.length);
 	});
 	handle.add('fingerprint',function(data){
-			for(i in sockets){
+			for(var i in sockets){
 				if(sockets[i].fingerprint == data){
+					console.log('SOCKET KILL - '+data+'  - Already Connected');
 					this.close(3000,'Already Connected');
+					return;
 				}
-				return;
 			}
 			this.fingerprint = data;
 			sockets.push(this);
 			wss.broadcast('JOIN '+data);
+			console.log('SOCKET REGISTER - '+data);
+		})
+		.add('page',function(data){
+			data = JSON.parse(data);
+			this.page = data;
+			console.log('SOCKET PAGE - '+this.fingerprint+' - '+data.href);
 		})
 		.add('ping',function(data){
 			return 'PONG '+data;
@@ -129,13 +134,18 @@ exports.start = function(folder,port,host,ws_host,ws_port){
 			var s = [],
 				i;
 			for(i in sockets){
-				s.push(sockets[i].fingerprint);
+				s.push({
+					fingerprint: sockets[i].fingerprint,
+					page: sockets[i].page
+				});
 			}
 			return JSON.stringify(s);
 		});
 	return {
 		server: server,
-		WebSocketServer: wss
+		WebSocketServer: wss,
+		sockets: sockets,
+		handle: handle
 	};
 };
 

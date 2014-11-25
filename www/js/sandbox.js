@@ -12,6 +12,7 @@ global.ready(function(undefined){
 		ctx = global.extend(ctx,{
 			Math: window.Math,
 			console: console,
+			location: location,
 			setInterval: function(){
 				return window.setInterval.apply(window,arguments);
 			},

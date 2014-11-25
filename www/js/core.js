@@ -192,12 +192,14 @@
 		Module: Module
 	},'global');
 	// Load settings
-	req.onload = function(){
-		global.settings = req.response;
+	window.onload = function(){
 		global.fingerprint = global.fingerprint();
-		global.ready();
+		req.onload = function(){
+			global.settings = req.response;
+			global.ready();
+		};
+		req.open('GET','etc/settings.json',true);
+		req.responseType = 'json';
+		req.send();
 	};
-	req.open('GET','etc/settings.json',true);
-	req.responseType = 'json';
-	req.send();
 })();

@@ -19,7 +19,7 @@
 								frag = dom.fragment();
 							s = JSON.parse(s);
 							for(i in s){
-								li = dom.create('li').text(s[i]);
+								li = dom.create('li').text(s[i].fingerprint+' - '+s[i].page.href);
 								frag.append(li);
 							}
 							ul.get('li').remove();

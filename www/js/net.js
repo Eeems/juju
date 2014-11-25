@@ -24,6 +24,7 @@ global.ready(function(){
 		global.debug.log('Client connecting '+global.fingerprint);
 		socket.open(function(){
 			socket.send('FINGERPRINT '+global.fingerprint);
+			socket.send('PAGE '+JSON.stringify(location));
 			socket.timeout = setInterval(function(){
 				socket.send('PING '+(+new Date));
 			},100000);
