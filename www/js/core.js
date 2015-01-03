@@ -2,7 +2,8 @@
 	"use strict";
 	var onready = [],
 		req = new XMLHttpRequest(),
-		startfn = function(){};
+		startfn = function(){},
+		ready = false;
 	function Module(obj,name){
 		for(var i in obj){
 			try{
@@ -64,6 +65,11 @@
 					deps: depends===undefined?[]:depends,
 					name: hash
 				});
+				if(ready){
+					setTimeout(function(){
+						global.ready();
+					},1);
+				}
 			}else{
 				var i,
 					count,
@@ -196,6 +202,7 @@
 		global.fingerprint = global.fingerprint();
 		req.onload = function(){
 			global.settings = req.response;
+			ready = true;
 			global.ready();
 		};
 		req.open('GET','etc/settings.json',true);

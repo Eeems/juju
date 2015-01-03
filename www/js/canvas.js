@@ -42,7 +42,7 @@ global.ready(function(){
 										this.context.strokeText(c.text,c.x,c.y.c.width);
 									}
 								break;
-								default:
+								case 'rectangle':default:
 									this.rect(c.x,c.y,c.width,c.height);
 									if(c.draw == 'fill'){
 										this.style({
