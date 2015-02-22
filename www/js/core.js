@@ -183,9 +183,7 @@
 						default:
 							out = input;
 					}
-					if(out === null){
-						out = 0;
-					}
+					out = out===null?0:out;
 					return out.toString(16);
 				};
 			keys.forEach(function(v,i,a){
