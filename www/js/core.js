@@ -1,111 +1,53 @@
-(function(){
+(function(global,undefined){
 	"use strict";
-	var onready = [],
-		req = new XMLHttpRequest(),
-		startfn = function(){},
-		ready = false;
-	function Module(obj,name){
-		for(var i in obj){
-			try{
-				this[i] = obj[i];
-			}catch(e){
-				console.error(e);
-			}
+	var ready = false,
+		onready = [];
+	global.Prop = function(props){
+		for(var i in props){
+			this[i] = props[i];
 		}
-		if(name !== undefined){
-			try{
-				global.register(name);
-			}catch(e){}
-		}else{
-			name = ''+now();
-		}
-		this._name = name;
 		return this;
-	}
-	function now(){
-		return +new Date;
-	}
-	function hash(val){
-		return (val+'')
-			.split('')
-			.reduce(function(a,b){
-				a=((a<<5)-a)+b.charCodeAt(0);
-				return a&a;
-			},0);
-	}
-	window.Module = Module;
-	window.global = new Module({
-		settings: {	// default initializing settings
+	};
+	Object.prototype.extend = function(ext){
+		var i,o,p,fn = function(name){
+			if(o[name]){
+				p[name] = o[name];
+			}
+		};
+		for(i in ext){
+			o = ext[i];
+			if(o instanceof Prop){
+				p = {};
+				fn('get');
+				fn('set');
+				fn('value');
+				fn('enumerable');
+				fn('configurable');
+				fn('writable');
+				Object.defineProperty(this,i,p);
+			}else{
+				this[i] = o;
+			}
+		}
+		return this;
+	};
+	global.extend = Object.prototype.extend;
+	global.extend({
+		now: new Prop({
+			get: function(){
+				return +new Date;
+			}
+		}),
+		hash: function(val){
+			return (val+'')
+				.split('')
+				.reduce(function(a,b){
+					a=((a<<5)-a)+b.charCodeAt(0);
+					return a&a;
+				},0);
+		},
+		settings: {
 			debug: true
-		},
-		version: 'git-'+now(),
-		start: function(callback){
-			if(callback === undefined){
-				console.debug('EVENT - start');
-				startfn.call(this);
-				global.ready();
-			}else{
-				startfn = callback;
-			}
-		},
-		now: now,
-		register: function(name){
-			if(global._modules.indexOf(name) == -1){
-				console.debug('EVENT - MODULE REGISTERED '+name);
-				global._modules.push(name);
-			}
-		},
-		hash: hash,
-		ready: function(callback,depends){
-			if(arguments.length > 0){
-				var hash = global.hash(callback+'');
-				console.debug('READY SCRIPT - ADD '+hash);
-				onready.push({
-					fn: callback,
-					deps: depends===undefined?[]:depends,
-					name: hash
-				});
-				if(ready){
-					setTimeout(function(){
-						global.ready();
-					},1);
-				}
-			}else{
-				var i,
-					count,
-					deps,
-					fn = function(){
-						if(onready.length > 0){
-							count=0;
-							deps = onready[0].deps;
-							for(i=0;i<deps.length;i++){
-								if(global._modules.indexOf(deps[i]) != -1){
-									count++;
-								}
-							}
-							if(count == deps.length){
-								var script = onready.shift();
-								console.debug('READY SCRIPT - RUN '+script.name);
-								script.fn.apply(this);
-							}else{
-								onready.push(onready.shift());
-							}
-							setTimeout(fn,1);
-						}
-					};
-				fn();
-			}
-		},
-		onready: function(){
-			return onready;
-		},
-		extend: function(original,extra){
-			for(var i in extra){
-				try{
-					original[i] = extra[i];
-				}catch(e){}
-			}
-			return original;
 		},
 		flatten: function(arr){
 			var out = [],
@@ -183,7 +125,9 @@
 						default:
 							out = input;
 					}
-					out = out===null?0:out;
+					if(out === null){
+						out = 0;
+					}
 					return out.toString(16);
 				};
 			keys.forEach(function(v,i,a){
@@ -191,20 +135,28 @@
 			});
 			return keys.join('-');
 		},
-		_scripts: [],
-		_modules: [],
-		Module: Module
-	},'global');
-	// Load settings
-	window.onload = function(){
-		global.fingerprint = global.fingerprint();
-		req.onload = function(){
-			global.settings = req.response;
-			ready = true;
-			global.ready();
-		};
-		req.open('GET','etc/settings.json',true);
-		req.responseType = 'json';
-		req.send();
+		ready: function(fn){
+			if(fn){
+				onready.push(fn);
+			}
+			if(ready || !fn){
+				while((fn = onready.pop())){
+					try{
+						fn.call(global);
+					}catch(e){
+						console.error(e);
+					}
+				}
+			}
+		}
+	});
+	var _readyfn = function(){
+		ready = true;
+		global.ready();
 	};
-})();
+	if(global instanceof Window){
+		global.addEventListener('ready',_readyfn);
+	}else{
+		_readyfn();
+	}
+})(window);
