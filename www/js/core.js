@@ -148,6 +148,10 @@
 					}
 				}
 			}
+		},
+		Module: function(obj){
+			this.extend(obj);
+			return this;
 		}
 	});
 	var _readyfn = function(){
