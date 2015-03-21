@@ -2,9 +2,43 @@
 	var layers = [],
 		font;
 	global.extend({
+		Shape: function(attributes){
+			var i,a,defaults = {
+				type: 'rectangle',
+				width: undefined,
+				height: undefined,
+				colour: 'black',
+				draw: 'fill',
+				x: 0,
+				y: 0,
+				name: '',
+				text: ''
+			};
+			for(i in defaults){
+				this[i] = defaults[i];
+			}
+			for(i in attributes){
+				a = attributes[i];
+				switch(i){
+					case 'color':case 'colour':
+						this.colour = a;
+					break;
+					case 'draw':
+						if(a != 'fill' || a != 'stroke'){
+							break;
+						}
+					case 'width':case 'height':case 'type':
+					case 'x':case 'y':case 'name':
+						this[i] = a;
+					break;
+				}
+			}
+			return this;
+		},
 		Canvas: function(name){
 			var node = dom.create('canvas').attr({id:'canvas_'+now,name:'canvas_'+name}),
-				context = node[0].getContext('2d');
+				context = node[0].getContext('2d'),
+				shapes = [];
 			this.extend({
 				id: new Prop({
 					get: function(){
@@ -95,6 +129,33 @@
 				}),
 				text: function(text,x,y,w){
 					context.fillText(text,x,y,w);
+					return this;
+				},
+				shapes: new Prop({
+					get: function(){
+						return shapes;
+					}
+				}),
+				add: function(attributes){
+					if(attributes.name === '' || this.get(attributes.name) === undefined){
+						shapes.push(new Shape(attributes));
+					}
+					return this;
+				},
+				get: function(i){
+					if(typeof i == 'string'){
+						for(var ii=0;ii<shapes.length;ii++){
+							if(i == shapes[ii].name){
+								return shapes[ii];
+							}
+						}
+					}else if(typeof i == 'number'){
+						return shapes[i];
+					}
+					return undefined;
+				},
+				drop: function(i){
+					shapes.splice(i,1);
 					return this;
 				}
 			});
