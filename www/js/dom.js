@@ -176,6 +176,26 @@
 						});
 					}
 					return this;
+				},
+				width: function(val){
+					if(val){
+						this.each(function(){
+							this.style.width = val+'px';
+						});
+						return this;
+					}else{
+						return this[0].outerWidth;
+					}
+				},
+				height: function(val){
+					if(val){
+						this.each(function(){
+							this.style.height = val+'px';
+						});
+						return this;
+					}else{
+						return this[0].outerHeight;
+					}
 				}
 			});
 			for(i=0;i<args.length;i++){
