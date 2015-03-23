@@ -3,35 +3,7 @@
 		font;
 	global.extend({
 		Shape: function(attributes){
-			var i,a,parent,defaults = {
-				type: 'rectangle',
-				width: undefined,
-				height: undefined,
-				colour: 'black',
-				draw: 'fill',
-				x: 0,
-				y: 0,
-				text: ''
-			};
-			for(i in defaults){
-				this[i] = defaults[i];
-			}
-			for(i in attributes){
-				a = attributes[i];
-				switch(i){
-					case 'color':case 'colour':
-						this.colour = a;
-					break;
-					case 'draw':
-						if(a != 'fill' || a != 'stroke'){
-							break;
-						}
-					case 'width':case 'height':case 'type':
-					case 'x':case 'y':case 'name':
-						this[i] = a;
-					break;
-				}
-			}
+			var i,a,parent;
 			this.extend({
 				id: new Prop({
 					get: function(){
@@ -54,6 +26,14 @@
 						parent = val;
 					}
 				}),
+				type: 'rectangle',
+				width: undefined,
+				height: undefined,
+				colour: 'black',
+				draw: 'fill',
+				x: 0,
+				y: 0,
+				text: '',
 				remove: function(){
 					if(parent){
 						parent.drop(this.id);
@@ -69,6 +49,22 @@
 					parent = undefined;
 				}
 			});
+			for(i in attributes){
+				a = attributes[i];
+				switch(i){
+					case 'color':case 'colour':
+						this.colour = a;
+					break;
+					case 'draw':
+						if(a != 'fill' || a != 'stroke'){
+							break;
+						}
+					case 'width':case 'height':case 'type':
+					case 'x':case 'y':case 'text':
+						this[i] = a;
+					break;
+				}
+			}
 			return this;
 		},
 		Group: function(name){
