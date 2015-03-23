@@ -41,20 +41,33 @@
 					}
 				},
 				append: function(){
-					var args = flatten(arguments);
+					var args = flatten(arguments),
+						self = this;
 					this.each(function(){
 						try{
 							for(var i in args){
 								if(typeof args[i]=='string'){
 									this.innerHTML += args[i];
-								}else{
+								}else if(args[i] instanceof Canvas){
+									self.append(args[i].node);
+								}else if(args[i] instanceof Nodes){
+									self.append(args[i]);
+								}else if(args[i] instanceof Canvas){
+									self.append(Canvas.node);
+								}else if(args[i] instanceof Node){
 									this.appendChild(args[i]);
 								}
 							}
 						}catch(e){
 							console.warn(e);
+							console.log(args[i]);
 						}
 					});
+					return this;
+				},
+				appendTo: function(parents){
+					parents = parents instanceof Nodes?parents:new Nodes(document).get(parents);
+					parents.append(this);
 					return this;
 				},
 				drop: function(selector){
@@ -199,7 +212,7 @@
 				}
 			});
 			for(i=0;i<args.length;i++){
-				this.push(args[i]);
+				this[i] = args[i];
 			}
 			return this;
 		},
@@ -212,7 +225,12 @@
 			},
 			fragment: function(){
 				return new Nodes(document.createDocumentFragment());
-			}
+			},
+			body: new Prop({
+				get: function(){
+					return global.dom.get('body');
+				}
+			})
 		})
 	});
 })(window);

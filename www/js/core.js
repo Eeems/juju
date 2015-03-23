@@ -31,8 +31,18 @@
 		}
 		return this;
 	};
+	Array.prototype.each = function(fn){
+		for(var i=0;i<this.length;i++){
+			fn.call(this[i],i);
+		}
+	};
 	global.extend = Object.prototype.extend;
 	global.extend({
+		global: new Prop({
+			get: function(){
+				return global;
+			}
+		}),
 		now: new Prop({
 			get: function(){
 				return +new Date;
