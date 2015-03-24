@@ -77,27 +77,30 @@
 		})
 	});
 	window.onkeypress = function(e){
-		var stack = handlers.press[global.keyboard.nameForCode(e.keyCode)];
+		var stack = handlers.press[global.keyboard.nameForCode(e.keyCode)],
+			self;
 		if(stack !== undefined){
-			for(var i=0;i<stack.length;i++){
-				stack[i].apply(this,arguments);
-			}
+			stack.each(function(){
+				this.apply(self,arguments);
+			});
 		}
 	};
 	window.onkeydown = function(e){
-		var stack = handlers.down[global.keyboard.nameForCode(e.keyCode)];
+		var stack = handlers.down[global.keyboard.nameForCode(e.keyCode)],
+			self;
 		if(stack !== undefined){
-			for(var i=0;i<stack.length;i++){
-				stack[i].apply(this,arguments);
-			}
+			stack.each(function(){
+				this.apply(self,arguments);
+			});
 		}
 	};
 	window.onkeyup = function(e){
-		var stack = handlers.up[global.keyboard.nameForCode(e.keyCode)];
+		var stack = handlers.up[global.keyboard.nameForCode(e.keyCode)],
+			self;
 		if(stack !== undefined){
-			for(var i=0;i<stack.length;i++){
-				stack[i].apply(this,arguments);
-			}
+			stack.each(function(){
+				this.apply(self,arguments);
+			});
 		}
 	};
 })(window);
