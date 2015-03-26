@@ -1,10 +1,10 @@
 var config = require('../etc/server.json'),
 	SocketServer = require('../lib/socketserver.js').SocketServer,
-	app = new SocketServer(config.data,config.host,config.port,config['ws-host'],config['ws-port']),
+	app = new SocketServer(config.data,config.port,config.host,config['ws-host'],config['ws-port']),
 	wss = app.WebSocketServer,
 	fs = require('fs');
 process.chdir(__dirname+'/..');
-app.path('/etc/settings.json',function(req,res){
+app.path('/settings.json',function(req,res){
 	res.writeHead(200,{
 		"Content-Type": 'application/json'
 	});
@@ -12,16 +12,14 @@ app.path('/etc/settings.json',function(req,res){
 		if(!e){
 			try{
 				d = JSON.parse(d);
-				d.websocket = {
-					host: ws_host,
-					port: ws_port
-				};
+				d.websocket = app.config.websocket;
 				res.end(JSON.stringify(d));
 			}catch(err){
 				e = err;
 			}
 		}
 		if(e){
+			console.error(e);
 			res.end("{\"debug\": false}");
 		}
 	});
