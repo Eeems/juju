@@ -18,6 +18,9 @@
 				slice: function(){
 					return Array.prototype.slice.apply(this,arguments);
 				},
+				indexOf: function(){
+					return Array.prototype.indexOf.apply(this,arguments);
+				},
 				get: function(selector){
 					var list = new Nodes(),
 						els,i;
@@ -33,6 +36,51 @@
 					}
 					return list;
 				},
+				child: function(id){ 
+					return args[id]?new Nodes(args[id]):new Nodes();
+				},
+				children: new Prop({
+					get: function(){
+						var list = new Nodes();
+						this.each(function(){
+							var i,c;
+							for(i=0;i<this.children.length;i++){
+								c = this.children[i];
+								if(list.indexOf(c)==-1){
+									list.push(c);
+								}
+							}
+						});
+						return list;
+					}
+				}),
+				parent: new Prop({
+					get: function(){
+						var list = new Nodes();
+						this.each(function(){
+							if(list.indexOf(this.parentNode)==-1){
+								list.push(this.parentNode);
+							}
+						});
+						return list;
+					}
+				}),
+				siblings: new Prop({
+					get: function(){
+						var list = new Nodes(),
+							self = this;
+						this.parent.each(function(){
+							var i,c;
+							for(i=0;i<this.children.length;i++){
+								c = this.children[i];
+								if(self.indexOf(c)==-1&&list.indexOf(c)==-1){
+									list.push(c);
+								}
+							}
+						});
+						return list;
+					}
+				}),
 				each: function(fn){
 					for(var i =0;i<this.length;i++){
 						if(this[i]!==undefined){

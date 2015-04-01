@@ -1,5 +1,6 @@
 (function(global,undefined){
 	var UserInterface = function(node){
+		node = node instanceof Nodes?node:dom.get(node);
 		
 	};
 	global.extend({
