@@ -1,7 +1,11 @@
 (function(global,undefined){
 	"use strict";
 	var ready = false,
-		onready = [];
+		onready = [],
+		fn = function(){
+			ready = true;
+			global.ready();
+		};
 	global.Prop = function(props){
 		for(var i in props){
 			this[i] = props[i];
@@ -164,13 +168,9 @@
 			return this;
 		}
 	});
-	var _readyfn = function(){
-		ready = true;
-		global.ready();
-	};
 	if(global instanceof Window){
-		global.addEventListener('ready',_readyfn);
+		global.addEventListener('ready',fn);
 	}else{
-		_readyfn();
+		fn();
 	}
 })(window);
