@@ -26,6 +26,7 @@
 						parent = val;
 					}
 				}),
+				valid: false,
 				type: 'rectangle',
 				width: undefined,
 				height: undefined,
@@ -95,6 +96,18 @@
 						this.remove();
 						val.append(this,true);
 						parent = val;
+					}
+				}),
+				valid: new Prop({
+					get: function(){
+						for(var i =0;i<children.length;i++){
+							if(children[i]!==undefined){
+								if(!children[i].valid){
+									return false;
+								}
+							}
+						}
+						return true;
 					}
 				}),
 				children: new Prop({
@@ -196,6 +209,18 @@
 				context: new Prop({
 					get: function(){
 						return context;
+					}
+				}),
+				valid: new Prop({
+					get: function(){
+						for(var i =0;i<children.length;i++){
+							if(children[i]!==undefined){
+								if(!children[i].valid){
+									return false;
+								}
+							}
+						}
+						return true;
 					}
 				}),
 				each: function(fn){
@@ -343,46 +368,49 @@
 					return this;
 				},
 				draw: function(){
-					var self = this,
-						draw = function(stack){
-						var i,c;
-						for(i=0;i<stack.length;i++){
-							c = stack[i];
-							if(c instanceof Shape){
-								switch(c.type){
-									case 'sprite':
-										self.sprite(c.sprite,c.x,c.y,c.width,c.height);
-									break;
-									case 'text':
-										if(c.draw == 'fill'){
-											self.style({
-												fillStyle: c.colour
-											}).text(c.text,c.x,c.y,c.width);
-										}else{
-											self.style({
-												strokeStyle: c.colour
-											});
-											self.context.strokeText(c.text,c.x,c.y.c.width);
+					if(!this.valid){
+						var self = this,
+							draw = function(stack){
+								var i,c;
+								for(i=0;i<stack.length;i++){
+									c = stack[i];
+									if(c instanceof Shape){
+										switch(c.type){
+											case 'sprite':
+												self.sprite(c.sprite,c.x,c.y,c.width,c.height);
+											break;
+											case 'text':
+												if(c.draw == 'fill'){
+													self.style({
+														fillStyle: c.colour
+													}).text(c.text,c.x,c.y,c.width);
+												}else{
+													self.style({
+														strokeStyle: c.colour
+													});
+													self.context.strokeText(c.text,c.x,c.y.c.width);
+												}
+											break;
+											default:
+												self.rect(c.x,c.y,c.width,c.height);
+												if(c.draw == 'fill'){
+													self.style({
+														fillStyle: c.colour
+													}).fill();
+												}else{
+													self.style({
+														strokeStyle: c.colour
+													}).stroke();
+												}
 										}
-									break;
-									default:
-										self.rect(c.x,c.y,c.width,c.height);
-										if(c.draw == 'fill'){
-											self.style({
-												fillStyle: c.colour
-											}).fill();
-										}else{
-											self.style({
-												strokeStyle: c.colour
-											}).stroke();
-										}
+										c.valid = true;
+									}else{
+										draw(c.children);
+									}
 								}
-							}else{
-								draw(c.children);
-							}
-						}
-					};
-					draw(children);
+							};
+						draw(children);
+					}
 					return this;
 				},
 				remove: function(){
