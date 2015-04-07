@@ -66,12 +66,16 @@
 		flatten: function(arr){
 			var out = [],
 				i;
-			for(i=0;i<arr.length;i++){
-				if(arr[i] !== undefined && arr[i].length !== undefined){
-					out = global.flatten(arr[i]);
-				}else{
-					out.push(arr[i]);
+			if(arr instanceof Array){
+				for(i=0;i<arr.length;i++){
+					if(arr[i] !== undefined && arr[i].length !== undefined){
+						out = global.flatten(arr[i]);
+					}else{
+						out.push(arr[i]);
+					}
 				}
+			}else{
+				out.push(arr);
 			}
 			return out;
 		},

@@ -1,16 +1,16 @@
 (function(global,undefined){
-	var x,y,
-		events = {
-			click: [],
-			up: [],
-			down: [],
-			over: [],
-			out: [],
-			dblclick: [],
-			move: []
-		};
-	global.extend({
-		mouse: new Module({
+	var Mouse = function(node){
+		var x,y,
+			events = {
+				click: [],
+				up: [],
+				down: [],
+				over: [],
+				out: [],
+				dblclick: [],
+				move: []
+			};
+		this.extend({
 			x: new Prop({
 				get: function(){
 					return x;
@@ -133,15 +133,20 @@
 				}
 				return this;
 			}
-		})
+		});
+		if(node.on){
+			node.on('mousemove',function(e){
+				x = e.clientX;
+				y = e.clientY;
+			});
+			node.on('click',function(e){
+				this.mouse.click(e);
+			});
+		}
+		return this;
+	};
+	global.extend({
+		Mouse: Mouse,
+		mouse: new Mouse(new Nodes(global))
 	});
-	if(global instanceof Window){
-		global.addEventListener('mousemove',function(e){
-			x = e.clientX;
-			y = e.clientY;
-		});
-		global.addEventListener('click',function(e){
-			global.mouse.click(e);
-		});
-	}
 })(window);

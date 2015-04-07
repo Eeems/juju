@@ -3,7 +3,7 @@
 	global.extend({
 		Nodes: function(){
 			var i,
-				args = flatten(arguments);
+				args = flatten(Array.slice(arguments));
 			this.extend({
 				length: args.length,
 				push: function(){
