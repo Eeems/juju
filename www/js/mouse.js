@@ -25,13 +25,34 @@
 				if(fn instanceof Function){
 					events.click.push(fn);
 				}else{
-					for(var i=0;i<events.click.length;i++){
+					// Handle IE a little
+					if (!fn.which && fn.button) {
+						if(fn.button & 1){
+							fn.which = 1; // Left
+						}else if(fn.button & 4){
+							fn.which = 2; // Middle
+						}else if(fn.button & 2){
+							fn.which = 3; // Right
+						}
+					}
+					var button = new Prop({
+							get: function(){
+								return ['left','middle','right'][fn.which-1];
+							}
+						}),
+						i,
+						scope;
+					for(i=0;i<events.click.length;i++){
 						try{
-							events.click[i].call(this,{
+							scope = {
 								x: this.x,
 								y: this.y,
 								e: fn
+							};
+							scope.extend({
+								button: button
 							});
+							events.click[i].call(this,scope);
 						}catch(e){}
 					}
 				}
