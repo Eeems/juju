@@ -1,7 +1,9 @@
 (function(global,undefined){
 	var UserInterface = function(node){
+		// Make sure that we are using a Nodes object
 		node = node instanceof Nodes?node:dom.get(node);
-		var mouse = new Mouse(node);
+		// Mouse handler. Or reuse if global
+		var mouse = node===global?global.mouse:new Mouse(node);
 		this.extend({
 			mouse: new Prop({
 				get: function(){
