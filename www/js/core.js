@@ -45,7 +45,7 @@
 		}),
 		now: new Prop({
 			get: function(){
-				return +new Date;
+				return performance.now();
 			}
 		}),
 		hash: function(val){

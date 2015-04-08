@@ -4,13 +4,17 @@ ready(function(){
 	var text = canvas.shape({
 			type: 'text',
 			text: 'Hello World!',
-			x: -100,
-			y: 0
+			x: -100
+		}),
+		text2 = canvas.shape({
+			type: 'text',
+			y: 15
 		}),
 		i = -100;
-	ui.canvas.append(text);
+	ui.canvas.append(text).append(text2);
 	// Move the text around
 	setInterval(function(){
+		text2.text = 'FPS: '+fps;
 		text.x = ++i;
 		if(i>=ui.canvas.width+100){
 			i=-100;

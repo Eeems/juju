@@ -1,5 +1,7 @@
 (function(global,undefined){
 	var uis = [],
+		fps = 0,
+		lasttime = now,
 		resize = true,
 		UserInterface = function(name,parent){
 			// Make sure that we are using a Nodes object
@@ -58,6 +60,9 @@
 			return this;
 		},
 		draw = function(){
+			var time = now;
+			fps = (1000/(time - lasttime)).toFixed(2);
+			lasttime = time;
 			if(resize){
 				global.fire('optimizedResize');
 			}
@@ -83,6 +88,11 @@
 					return global.innerHeight;
 				}
 			})
+		}),
+		fps: new Prop({
+			get: function(){
+				return fps;
+			}
 		})
 	});
 	global.ready(function(){
