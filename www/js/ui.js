@@ -1,5 +1,6 @@
 (function(global,undefined){
 	var uis = [],
+		resize = true,
 		UserInterface = function(name,parent){
 			// Make sure that we are using a Nodes object
 			parent = parent instanceof Nodes?parent:dom.get(parent);
@@ -57,6 +58,9 @@
 			return this;
 		},
 		draw = function(){
+			if(resize){
+				global.fire('optimizedResize');
+			}
 			for(var i=0;i<uis.length;i++){
 				try{
 					uis[i].draw();
@@ -85,14 +89,12 @@
 		global.extend({
 			ui: new UserInterface('main',dom.body)
 		}).on('resize',function(){
+			resize = true;
+		}).on('optimizedResize',function(){
 			dom.body
 				.width(viewport.width)
-				.height(viewport.height)
-				.fire('resize');
+				.height(viewport.height);
 		});
-		setTimeout(function(){
-			global.fire('resize');
-		},1);
+		draw();
 	});
-	draw();
 })(window);

@@ -294,7 +294,7 @@
 			},
 			body: new Prop({
 				get: function(){
-					return global.dom.get('body');
+					return new Nodes(document.body);
 				}
 			})
 		})

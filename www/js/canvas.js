@@ -202,7 +202,8 @@
 		Canvas: function(name){
 			var node = dom.create('canvas').attr({id:'canvas_'+now,name:'canvas_'+name}),
 				context = node[0].getContext('2d'),
-				children = [];
+				children = [],
+				styles = {};
 			this.extend({
 				id: new Prop({
 					get: function(){
@@ -277,7 +278,8 @@
 				style: function(style){
 					for(var i in style){
 						try{
-							if(context[i]!==undefined){
+							if(context[i]!==undefined && styles[i] !== style[i]){
+								styles[i] = style[i];
 								context[i] = style[i];
 							}
 						}catch(e){
@@ -421,8 +423,7 @@
 												}else{
 													self.style({
 														strokeStyle: c.colour
-													});
-													self.context.strokeText(c.text,c.x,c.y.c.width);
+													}).context.strokeText(c.text,c.x,c.y.c.width);
 												}
 												self.baseline = b;
 											break;
