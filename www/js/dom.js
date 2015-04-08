@@ -36,7 +36,7 @@
 					}
 					return list;
 				},
-				child: function(id){ 
+				child: function(id){
 					return args[id]?new Nodes(args[id]):new Nodes();
 				},
 				children: new Prop({
