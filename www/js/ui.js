@@ -93,7 +93,8 @@
 		}).on('optimizedResize',function(){
 			dom.body
 				.width(viewport.width)
-				.height(viewport.height);
+				.height(viewport.height)
+				.fire('resize');
 		});
 		draw();
 	});
