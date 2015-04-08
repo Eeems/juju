@@ -89,7 +89,7 @@
 					}
 				},
 				append: function(){
-					var args = flatten(arguments),
+					var args = flatten(Array.slice(arguments)),
 						self = this;
 					this.each(function(){
 						try{
@@ -99,16 +99,15 @@
 								}else if(args[i] instanceof Canvas){
 									self.append(args[i].node);
 								}else if(args[i] instanceof Nodes){
-									self.append(args[i]);
-								}else if(args[i] instanceof Canvas){
-									self.append(Canvas.node);
+									args[i].each(function(){
+										self.append(this);
+									});
 								}else if(args[i] instanceof Node){
 									this.appendChild(args[i]);
 								}
 							}
 						}catch(e){
 							console.warn(e);
-							console.log(args[i]);
 						}
 					});
 					return this;
@@ -119,6 +118,10 @@
 					return this;
 				},
 				drop: function(selector){
+					this.get(selector).remove();
+					return this;
+				},
+				remove: function(){
 					this.each(function(){
 						try{
 							this.parentNode.removeChild(this);
@@ -245,7 +248,7 @@
 						});
 						return this;
 					}else{
-						return this[0].outerWidth;
+						return this[0].offsetWidth;
 					}
 				},
 				height: function(val){
@@ -255,7 +258,7 @@
 						});
 						return this;
 					}else{
-						return this[0].outerHeight;
+						return this[0].offsetHeight;
 					}
 				}
 			});
@@ -263,6 +266,21 @@
 				this[i] = args[i];
 			}
 			return this;
+		},
+		on: function(){
+			global_node.on.apply(this,arguments);
+			return this;
+		},
+		fire: function(){
+			global_node.fire.apply(this,arguments);
+			return this;
+		},
+		off: function(){
+			global_node.off.apply(this,arguments);
+			return this;
+		},
+		each: function(fn){
+			fn.call(this,0);
 		},
 		dom: new Module({
 			create: function(tag){
@@ -281,4 +299,5 @@
 			})
 		})
 	});
+	var global_node = new Nodes(global);
 })(window);

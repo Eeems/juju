@@ -3,7 +3,30 @@
 		font;
 	global.extend({
 		Shape: function(attributes){
-			var i,a,parent;
+			var i,a,parent,
+				values = {
+					type: 'rectangle',
+					width: undefined,
+					height: undefined,
+					baseline: 'top',
+					colour: 'black',
+					draw: 'fill',
+					x: 0,
+					y: 0,
+					text: ''
+				},
+				o = {},
+				prop = function(i){
+					return new Prop({
+						get: function(){
+							return values[i];
+						},
+						set: function(val){
+							values[i] = val;
+							this.valid = false;
+						}
+					});
+				};
 			this.extend({
 				id: new Prop({
 					get: function(){
@@ -27,14 +50,6 @@
 					}
 				}),
 				valid: false,
-				type: 'rectangle',
-				width: undefined,
-				height: undefined,
-				colour: 'black',
-				draw: 'fill',
-				x: 0,
-				y: 0,
-				text: '',
 				remove: function(){
 					if(parent){
 						parent.drop(this.id);
@@ -50,6 +65,10 @@
 					parent = undefined;
 				}
 			});
+			for(i in values){
+				o[i] = prop(i);
+			}
+			this.extend(o);
 			for(i in attributes){
 				a = attributes[i];
 				switch(i){
@@ -123,6 +142,7 @@
 					}
 				},
 				shape: function(attributes){
+					console.log(this.id);
 					return this.append(global.canvas.shape(attributes));
 				},
 				group: function(name){
@@ -279,7 +299,13 @@
 						return node.width();
 					},
 					set: function(val){
-						node.width(val);
+						node.each(function(){
+							if(this.tagName == 'CANVAS'){
+								this.width = val;
+							}else{
+								dom.get(this).width(val);
+							}
+						});
 					}
 				}),
 				height: new Prop({
@@ -287,7 +313,13 @@
 						return node.height();
 					},
 					set: function(val){
-						node.height(val);
+						node.each(function(){
+							if(this.tagName == 'CANVAS'){
+								this.height = val;
+							}else{
+								dom.get(this).height(val);
+							}
+						});
 					}
 				}),
 				text: function(text,x,y,w){
@@ -321,8 +353,8 @@
 				clear: function(x,y,w,h){
 					x = x|0;
 					y = y|0;
-					w = w===undefined?this.width():w;
-					h = h===undefined?this.height():h;
+					w = w===undefined?this.width:w;
+					h = h===undefined?this.height:h;
 					context.clearRect(x,y,w,h);
 					return this;
 				},
@@ -380,6 +412,8 @@
 												self.sprite(c.sprite,c.x,c.y,c.width,c.height);
 											break;
 											case 'text':
+												var b = self.baseline;
+												self.baseline = c.baseline;
 												if(c.draw == 'fill'){
 													self.style({
 														fillStyle: c.colour
@@ -390,6 +424,7 @@
 													});
 													self.context.strokeText(c.text,c.x,c.y.c.width);
 												}
+												self.baseline = b;
 											break;
 											default:
 												self.rect(c.x,c.y,c.width,c.height);
@@ -409,12 +444,15 @@
 									}
 								}
 							};
+						this.clear();
 						draw(children);
 					}
 					return this;
 				},
 				remove: function(){
-					node.remove();
+					try{
+						node.remove();
+					}catch(e){}
 					return this;
 				},
 				appendTo: function(p){
@@ -442,7 +480,10 @@
 						return node.parent;
 					},
 					set: function(val){
-
+						try{
+							node.remove();
+						}catch(e){}
+						node.appendTo(val);
 					}
 				})
 			});
