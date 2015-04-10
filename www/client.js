@@ -14,7 +14,7 @@ ready(function(){
 	ui.canvas.append(text).append(text2);
 	// Move the text around
 	setInterval(function(){
-		text2.text = 'FPS: '+fps;
+		text2.text = 'FPS: '+parseInt(fps,10);
 		text.x = ++i;
 		if(i>=ui.canvas.width+100){
 			i=-100;

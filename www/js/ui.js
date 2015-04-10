@@ -66,10 +66,12 @@
 			if(resize){
 				global.fire('optimizedResize');
 			}
-			for(var i=0;i<uis.length;i++){
-				try{
-					uis[i].draw();
-				}catch(e){}
+			if(page.visible){
+				for(var i=0;i<uis.length;i++){
+					try{
+						uis[i].draw();
+					}catch(e){}
+				}
 			}
 			global.requestAnimationFrame(draw);
 		};

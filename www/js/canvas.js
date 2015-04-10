@@ -234,7 +234,10 @@
 				}),
 				valid: new Prop({
 					get: function(){
-						for(var i =0;i<children.length;i++){
+						if(node.parent.length===0 || (node.parent.length =1 && node.parent[0] === null)){
+							return true;
+						}
+						for(i =0;i<children.length;i++){
 							if(children[i]!==undefined){
 								if(!children[i].valid){
 									return false;
