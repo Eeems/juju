@@ -10,7 +10,7 @@
 					height: undefined,
 					baseline: 'top',
 					colour: 'black',
-					draw: 'fill',
+					style: 'fill',
 					x: 0,
 					y: 0,
 					text: ''
@@ -47,6 +47,66 @@
 						this.remove();
 						val.append(this,true);
 						parent = val;
+					}
+				}),
+				draw: function(){
+					if(!this.valid){
+						this.clear();
+						var c = values;
+						parent.context.save();
+						switch(c.type){
+							case 'sprite':
+								parent.sprite(c.sprite,c.x,c.y,c.width,c.height);
+							break;
+							case 'text':
+								parent.baseline = c.baseline;
+								if(c.style == 'fill'){
+									parent.style({
+										fillStyle: c.colour
+									}).text(c.text,c.x,c.y,c.width);
+								}else{
+									parent.style({
+										strokeStyle: c.colour
+									}).context.strokeText(c.text,c.x,c.y.c.width);
+								}
+							break;
+							default:
+								parent.rect(c.x,c.y,c.width,c.height);
+								if(c.style == 'fill'){
+									parent.style({
+										fillStyle: c.colour
+									}).fill();
+								}else{
+									parent.style({
+										strokeStyle: c.colour
+									}).stroke();
+								}
+						}
+						parent.context.restore();
+						this.valid = true;
+					}
+				},
+				clear: function(){
+					var d = this.dim;
+					this.parent.clear(values.x,values.y,d.width,d.height);
+					return this;
+				},
+				dim: new Prop({
+					get: function(){
+						var r = {
+							width: values.width,
+							height: values.height
+						};
+						switch(values.type){
+							case 'text':
+								r.width = parent.measureText(values.text).width;
+								if(r.width<values.width){
+									r.width = values.width;
+								}
+								r.height = parent.measureText('M').width;
+							break;
+						}
+						return r;
 					}
 				}),
 				valid: false,
@@ -87,123 +147,16 @@
 			}
 			return this;
 		},
-		Group: function(name){
-			var children = [],
-				parent;
-			this.extend({
-				id: new Prop({
-					get: function(){
-						if(parent){
-							for(var i=0;i<parent.children.length;i++){
-								if(parent.children[i]===this){
-									return i;
-								}
-							}
-						}
-					}
-				}),
-				name: new Prop({
-					get: function(){
-						return name;
-					}
-				}),
-				parent: new Prop({
-					get: function(){
-						return parent;
-					},
-					set: function(val){
-						this.remove();
-						val.append(this,true);
-						parent = val;
-					}
-				}),
-				valid: new Prop({
-					get: function(){
-						for(var i =0;i<children.length;i++){
-							if(children[i]!==undefined){
-								if(!children[i].valid){
-									return false;
-								}
-							}
-						}
-						return true;
-					}
-				}),
-				children: new Prop({
-					get: function(){
-						return children;
-					}
-				}),
-				each: function(fn){
-					for(var i =0;i<children.length;i++){
-						if(children[i]!==undefined){
-							fn.call(children[i],i);
-						}
-					}
-				},
-				shape: function(attributes){
-					console.log(this.id);
-					return this.append(global.canvas.shape(attributes));
-				},
-				group: function(name){
-					var g;
-					this.each(function(){
-						if(this.name === name){
-							g = this;
-						}
-					});
-					if(!g){
-						g = global.canvas.group(name);
-						this.append(g);
-					}
-					return g;
-				},
-				draw: function(){
-					var p = this;
-					while((p=p.parent) instanceof Group){}
-					p.draw();
-					return this;
-				},
-				append: function(child,force){
-					if(!(child instanceof Shape || child instanceof Group)){
-						child = global.canvas.create(child);
-					}
-					if(!force){
-						child.parent = this;
-					}else if(children.indexOf()==-1){
-						children.push(child);
-					}
-					return this;
-				},
-				drop: function(id){
-					children.slice(id,1);
-					return this;
-				},
-				remove: function(){
-					if(parent){
-						parent.drop(this.id);
-					}
-				},
-				'delete': function(){
-					this.remove();
-					while(children.length){
-						children[0].delete();
-					}
-					for(var i in this){
-						try{
-							delete this[i];
-						}catch(e){}
-					}
-					parent = undefined;
-				}
-			});
-			return this;
-		},
 		Canvas: function(name){
 			var node = dom.create('canvas').attr({id:'canvas_'+now,name:'canvas_'+name}),
 				context = node[0].getContext('2d'),
 				children = [],
-				styles = {};
+				styles = {
+					textBaseline: context.textBaseline,
+					font: context.font,
+					fillStyle: context.fillStyle,
+					strokeStyle: context.strokeStyle
+				};
 			this.extend({
 				id: new Prop({
 					get: function(){
@@ -256,18 +209,22 @@
 				},
 				font: new Prop({
 					get: function(){
-						return context.font;
+						return styles.font;
 					},
 					set: function(val){
-						context.font = val;
+						this.style({
+							font: val
+						});
 					}
 				}),
 				baseline: new Prop({
 					get: function(){
-						return context.textBaseline;
+						return styles.textBaseline;
 					},
 					set: function(val){
-						context.textBaseline = val;
+						this.style({
+							textBaseline: val
+						});
 					}
 				}),
 				align: new Prop({
@@ -275,13 +232,15 @@
 						return context.textAlign;
 					},
 					set: function(val){
-						context.textAlign = val;
+						this.style({
+							textAlign: val
+						});
 					}
 				}),
 				style: function(style){
 					for(var i in style){
 						try{
-							if(context[i]!==undefined && styles[i] !== style[i]){
+							if(context.hasOwnProperty(i) && styles[i] !== style[i]){
 								styles[i] = style[i];
 								context[i] = style[i];
 							}
@@ -334,24 +293,24 @@
 				rect: function(x,y,w,h){
 					x = x|0;
 					y = y|0;
-					w = w===undefined?this.width():w;
-					h = h===undefined?this.height():h;
+					w = w===undefined?this.width:w;
+					h = h===undefined?this.height:h;
 					context.rect(x,y,w,h);
 					return this;
 				},
 				fillRect: function(x,y,w,h){
 					x = x|0;
 					y = y|0;
-					w = w===undefined?this.width():w;
-					h = h===undefined?this.height():h;
+					w = w===undefined?this.width:w;
+					h = h===undefined?this.height:h;
 					context.fillRect(x,y,w,h);
 					return this;
 				},
 				strokeRect: function(x,y,w,h){
 					x = x|0;
 					y = y|0;
-					w = w===undefined?this.width():w;
-					h = h===undefined?this.height():h;
+					w = w===undefined?this.width:w;
+					h = h===undefined?this.height:h;
 					context.strokeRect(x,y,w,h);
 					return this;
 				},
@@ -390,7 +349,7 @@
 					}
 				}),
 				append: function(child,force){
-					if(!(child instanceof Shape || child instanceof Group)){
+					if(!(child instanceof Shape)){
 						child = global.canvas.create(child);
 					}
 					if(!force){
@@ -410,45 +369,9 @@
 							draw = function(stack){
 								var i,c;
 								for(i=0;i<stack.length;i++){
-									c = stack[i];
-									if(c instanceof Shape){
-										switch(c.type){
-											case 'sprite':
-												self.sprite(c.sprite,c.x,c.y,c.width,c.height);
-											break;
-											case 'text':
-												var b = self.baseline;
-												self.baseline = c.baseline;
-												if(c.draw == 'fill'){
-													self.style({
-														fillStyle: c.colour
-													}).text(c.text,c.x,c.y,c.width);
-												}else{
-													self.style({
-														strokeStyle: c.colour
-													}).context.strokeText(c.text,c.x,c.y.c.width);
-												}
-												self.baseline = b;
-											break;
-											default:
-												self.rect(c.x,c.y,c.width,c.height);
-												if(c.draw == 'fill'){
-													self.style({
-														fillStyle: c.colour
-													}).fill();
-												}else{
-													self.style({
-														strokeStyle: c.colour
-													}).stroke();
-												}
-										}
-										c.valid = true;
-									}else{
-										draw(c.children);
-									}
+									stack[i].draw();
 								}
 							};
-						this.clear();
 						draw(children);
 					}
 					return this;
@@ -465,19 +388,6 @@
 				},
 				shape: function(attributes){
 					return this.append(global.canvas.shape(attributes));
-				},
-				group: function(name){
-					var g;
-					this.each(function(){
-						if(this.name === name){
-							g = this;
-						}
-					});
-					if(!g){
-						g = global.canvas.group(name);
-						this.append(g);
-					}
-					return g;
 				},
 				parent: new Prop({
 					get: function(){
@@ -548,9 +458,6 @@
 			},
 			shape: function(attributes){
 				return new Shape(attributes);
-			},
-			group: function(name){
-				return new Group(name);
 			},
 			each: function(fn){
 				for(var i=0;i<layers.length;i++){

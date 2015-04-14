@@ -11,7 +11,9 @@ ready(function(){
 			y: 15
 		}),
 		i = -100;
-	ui.canvas.append(text).append(text2);
+	ui.canvas.shape({
+		colour: 'blue'
+	}).append(text).append(text2);
 	// Move the text around
 	setInterval(function(){
 		text2.text = 'FPS: '+parseInt(fps,10);
