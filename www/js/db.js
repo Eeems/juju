@@ -10,7 +10,7 @@
 				onsuccess: function(e){
 					db = e.target.result;
 					for(var i=0;i<db.objectStoreNames.length;i++){
-						new Table(db.objectStoreNames[i]);
+						new self.Table(db.objectStoreNames[i]);
 					}
 				},
 				onerror: function(e){
@@ -19,6 +19,7 @@
 				},
 				onupgradeneeded: function(e){
 					var i,ii,table,item,index;
+					db = e.target.result;
 					for(i in structure){
 						item = structure[i];
 						if(item.config){
@@ -63,7 +64,7 @@
 				}),
 				createTable: function(name,config){
 					db.createObjectStore(name,config);
-					return new Table(name);
+					return new self.Table(name);
 				},
 				table: function(name){
 					for(var i in tables){
@@ -74,8 +75,14 @@
 					throw new Error('Table '+name+' does not exist');
 				},
 				Table: function(name){
-					var indexes = [];
+					var indexes = [],
+						transaction = db.transaction(name,"readwrite");
 					this.extend({
+						name: new Prop({
+							get: function(){
+								return name;
+							}
+						}),
 						db: new Prop({
 							get: function(){
 								return db;
@@ -87,7 +94,8 @@
 						},
 						Index: function(name){
 
-						}
+						},
+
 					});
 					tables.push(this);
 					return this;
