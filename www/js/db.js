@@ -26,7 +26,7 @@
 						if(item.config){
 							table = db.createObjectStore(i,item.config);
 							if(item.indexes){
-								for(ii in item.indexes){
+								for(ii=0;ii< item.indexes.length;ii++){
 									index = item.indexes[ii];
 									table.createIndex(ii,index.path,index.params);
 								}
@@ -80,19 +80,8 @@
 				Table: function(name){
 					var self = this,
 						indexes = [],
-						records = [],
 						count = 0,
-						getCount = function(){
-							var req = store().count();
-							req.extend({
-								onsuccess: function(){
-									count = req.result;
-								},
-								onerror: function(e){
-									console.error(e);
-								}
-							});
-						},
+						i,
 						store = function(){
 							try{
 								transaction = db.transaction(name,"readwrite");
@@ -111,7 +100,19 @@
 								console.error(e);
 							}
 							return transaction.objectStore(name);
-						};
+						},
+						getCount = function(){
+							var req = store().count();
+							req.extend({
+								onsuccess: function(){
+									count = req.result;
+								},
+								onerror: function(e){
+									console.error(e);
+								}
+							});
+						},
+						indexnames = store().indexNames;
 					self.extend({
 						name: new Prop({
 							get: function(){
@@ -121,6 +122,11 @@
 						db: new Prop({
 							get: function(){
 								return db;
+							}
+						}),
+						indexes: new Prop({
+							get: function(){
+								return indexes;
 							}
 						}),
 						count: new Prop({
@@ -170,8 +176,8 @@
 							return self;
 						},
 						createIndex: function(name,path,params){
-
-							return self;
+							store().createIndex(name,path,params);
+							return new self.Index(name);
 						},
 						Index: function(name){
 							var self = this,
@@ -189,6 +195,11 @@
 								data: new Prop({
 									get: function(){
 										return data;
+									}
+								}),
+								name: new Prop({
+									get: function(){
+										return name;
 									}
 								}),
 								'delete': function(callback){
@@ -218,7 +229,6 @@
 								data,
 								drop = function(callback,e){
 									callback = callback || function(){};
-									records.slice(records.indexOf(self),1);
 									callback.call(self,e||{});
 									for(var i in self){
 										try{
@@ -270,7 +280,6 @@
 									});
 								}
 							});
-							records.push(self);
 							return self;
 						},
 						'delete': function(callback){
@@ -294,6 +303,9 @@
 					});
 					tables.push(self);
 					getCount();
+					for(i=0;i<indexnames.length;i++){
+						new self.Index(indexnames[i]);
+					}
 					return self;
 				},
 				'delete': function(callback){
@@ -311,7 +323,9 @@
 				}
 			});
 			global.on('beforeunload',function(){
-				db.close();
+				try{
+					db.close();
+				}catch(e){}
 			});
 			databases.push(self);
 			return self;
