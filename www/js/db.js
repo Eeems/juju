@@ -157,7 +157,7 @@
 							return self;
 						},
 						get: function(key){
-							return new self.Record(key);
+							return new self.Record(key,store);
 						},
 						each: function(callback){
 							var req = store().openCursor();
@@ -180,7 +180,8 @@
 							return new self.Index(name);
 						},
 						Index: function(name){
-							var self = this,
+							var parent = self,
+								index = this,
 								data,
 								req = store().index(name);
 							req.extend({
@@ -191,7 +192,7 @@
 									throw new Error('Index '+name+'does not exist');
 								}
 							});
-							self.extend({
+							index.extend({
 								data: new Prop({
 									get: function(){
 										return data;
@@ -202,29 +203,50 @@
 										return name;
 									}
 								}),
+								get: function(key){
+									return new index.Record(key,function(){
+										return index.data;
+									});
+								},
+								each: function(callback){
+									var req = index.data.openCursor();
+									req.extend({
+										onsuccess: function(){
+											var c = req.result;
+											if(c){
+												callback.call(self,c.value);
+												c.continue();
+											}
+										},
+										onerror: function(e){
+											console.error(e);
+										}
+									});
+									return index;
+								},
 								'delete': function(callback){
 									var req = store().deleteIndex(name);
 									req.extend({
 										onsuccess: function(e){
-											callback.call(self,e);
-											indexes.slice(indexes.indexOf(self),1);
-											for(var i in self){
+											callback.call(index,e);
+											indexes.slice(indexes.indexOf(index),1);
+											for(var i in index){
 												try{
-													delete self[i];
+													delete index[i];
 												}catch(e){}
 											}
-											self = undefined;
+											index = undefined;
 										},
 										onerror: function(e){
-											callback.call(self,e);
+											callback.call(index,e);
 										}
 									});
 								}
 							});
-							indexes.push(self);
-							return self;
+							indexes.push(index);
+							return index;
 						},
-						Record: function(key){
+						Record: function(key,storefn){
 							var self = this,
 								data,
 								drop = function(callback,e){
