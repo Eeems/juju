@@ -4,7 +4,8 @@ ready(function(){
 	var text = canvas.shape({
 			type: 'text',
 			text: 'Hello World!',
-			x: -100
+			x: -100,
+			y: 30
 		}),
 		text2 = canvas.shape({
 			type: 'text',
