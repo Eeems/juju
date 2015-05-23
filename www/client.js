@@ -23,21 +23,4 @@ ready(function(){
 			i=-100;
 		}
 	},10);
-	db.create('test',{
-		test: {
-			config: {
-				autoIncrement: true,
-				keyPath: 'id'
-			},
-			indexes: {
-				id: {
-					path: 'id'
-				}
-			},
-			data: [
-				{value:'test'},
-				{value:'test2'}
-			]
-		}
-	});
 });
