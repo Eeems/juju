@@ -43,7 +43,71 @@
 						get: function(){
 							return name;
 						}
-					})
+					}),
+					db: new Prop({
+						value: db,
+						writable: false
+					}),
+					store: new Prop({
+						get: function(){
+							return db.transaction.objectStore(name);
+						}
+					}),
+					add: function(value){
+						var req = self.store.add(value);
+						return new Promise(function(resolve,reject){
+							req.onsuccess = function(e){
+								resolve(e);
+							};
+							req.onerror = function(e){
+								reject(e);
+							};
+						});
+					},
+					remove: function(index){
+						var req = self.store.delete(index);
+						return new Promise(function(resolve,reject){
+							req.onsuccess = function(e){
+								resolve(e);
+							};
+							req.onerror = function(e){
+								reject(e);
+							};
+						});
+					},
+					get: function(index){
+						var store = self.store,
+							req = store.get(index);
+						return new Promise(function(resolve,reject){
+							req.onsuccess = function(e){
+								resolve(e.result,store);
+							};
+							req.onerror = function(e){
+								reject(e);
+							};
+						});
+					},
+					update: function(index,newval){
+						return new Promise(function(resolve,reject){
+							self.get(index)
+								.then(function(oldval,store){
+									var i,req;
+									for(i in newval){
+										oldval[i] = newval[i];
+									}
+									req = store.put(oldval);
+									req.onerror = function(e){
+										reject(e);
+									};
+									req.onsuccess = function(e){
+										resolve(e);
+									};
+								})
+								.catch(function(e){
+									reject(e);
+								});
+						});
+					}
 				});
 				return self;
 			},
@@ -62,6 +126,11 @@
 							return db.version;
 						}
 					}),
+					transaction: new Prop({
+						get: function(){
+							return db.transaction([self.name],'readwrite');
+						}
+					}),
 					tables:{},
 					table: function(name){
 						return self.tables[name];
@@ -72,6 +141,7 @@
 						}
 					}),
 					db: new Prop({
+						enumerable: false,
 						get: function(){
 							return db;
 						}
