@@ -1,7 +1,8 @@
 (function(global,undefined){
+	var dbs = {};
 	global.extend({
 		db: new Module({
-			open: function(name,struct){
+			setup: function(name,struct){
 				return new Promise(function(resolve,reject){
 					var req = indexedDB.open(name);
 					req.onupgradeneeded = function(e){
@@ -26,7 +27,9 @@
 						}
 					};
 					req.onsuccess = function(e){
-						resolve(new global.db.DB(e.target.result,struct));
+						var db = new global.db.DB(e.target.result,struct);
+						dbs[name] = db;
+						resolve(db);
 					};
 					req.onerror = function(e){
 						reject(e);
@@ -36,12 +39,27 @@
 					};
 				});
 			},
+			get: function(name){
+				return dbs[name];
+			},
 			Table: function(db,name){
-				var self = this;
+				var self = this,
+					count = 0,
+					updatecount = function(){
+						var req = self.store.count();
+						req.onsuccess = function(e){
+							count = e.target.result;
+						};
+					};
 				self.extend({
 					name: new Prop({
 						get: function(){
 							return name;
+						}
+					}),
+					count: new Prop({
+						get: function(){
+							return count;
 						}
 					}),
 					db: new Prop({
@@ -53,14 +71,21 @@
 							return db.transaction.objectStore(name);
 						}
 					}),
+					keyPath: new Prop({
+						get: function(){
+							return self.store.keyPath;
+						}
+					}),
 					add: function(value){
 						var req = self.store.add(value);
 						return new Promise(function(resolve,reject){
 							req.onsuccess = function(e){
 								resolve(e);
+								updatecount();
 							};
 							req.onerror = function(e){
 								reject(e);
+								updatecount();
 							};
 						});
 					},
@@ -69,18 +94,19 @@
 						return new Promise(function(resolve,reject){
 							req.onsuccess = function(e){
 								resolve(e);
+								updatecount();
 							};
 							req.onerror = function(e){
 								reject(e);
+								updatecount();
 							};
 						});
 					},
 					get: function(index){
-						var store = self.store,
-							req = store.get(index);
+						var req = self.store.get(index);
 						return new Promise(function(resolve,reject){
 							req.onsuccess = function(e){
-								resolve(e.result,store);
+								resolve(e.target.result);
 							};
 							req.onerror = function(e){
 								reject(e);
@@ -90,12 +116,12 @@
 					update: function(index,newval){
 						return new Promise(function(resolve,reject){
 							self.get(index)
-								.then(function(oldval,store){
+								.then(function(oldval){
 									var i,req;
 									for(i in newval){
 										oldval[i] = newval[i];
 									}
-									req = store.put(oldval);
+									req = self.store.put(oldval);
 									req.onerror = function(e){
 										reject(e);
 									};
@@ -109,6 +135,7 @@
 						});
 					}
 				});
+				updatecount();
 				return self;
 			},
 			DB: function(db,struct){
@@ -181,6 +208,11 @@
 					self.close();
 				});
 				return self;
+			}
+		}),
+		dbs: new Prop({
+			get: function(){
+				return dbs;
 			}
 		})
 	});

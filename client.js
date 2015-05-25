@@ -23,4 +23,36 @@ ready(function(){
 			i=-100;
 		}
 	},10);
+	db.setup('test',{
+		test: {
+			config: {
+				autoIncrement: true,
+				keyPath: 'id'
+			},
+			indexes: {
+				id: {
+					path: 'id',
+					unique: true
+				}
+			},
+			values: [
+				{
+					id: 0,
+					value: 'test'
+				},
+				{
+					id: 1,
+					value: 'testing'
+				}
+			]
+		}
+	}).then(function(db){
+		db.table('test').get(0).then(function(val){
+			console.log(val);
+		}).catch(function(e){
+			console.trace(e);
+		});
+	}).catch(function(e){
+		console.trace(e);
+	});
 });
