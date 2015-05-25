@@ -8,35 +8,40 @@
 		}
 		return this;
 	};
-	Object.prototype.extend = function(ext){
-		var i,o,p,fn = function(name){
-			if(o[name]){
-				p[name] = o[name];
+	Object.defineProperty(Object.prototype,'extend',{
+		enumerable: false,
+		value: function(ext){
+			var i,o,p,fn = function(name){
+				if(o[name]){
+					p[name] = o[name];
+				}
+			};
+			for(i in ext){
+				o = ext[i];
+				if(o instanceof Prop){
+					p = {};
+					fn('get');
+					fn('set');
+					fn('value');
+					fn('enumerable');
+					fn('configurable');
+					fn('writable');
+					Object.defineProperty(this,i,p);
+				}else{
+					this[i] = o;
+				}
 			}
-		};
-		for(i in ext){
-			o = ext[i];
-			if(o instanceof Prop){
-				p = {};
-				fn('get');
-				fn('set');
-				fn('value');
-				fn('enumerable');
-				fn('configurable');
-				fn('writable');
-				Object.defineProperty(this,i,p);
-			}else{
-				this[i] = o;
+			return this;
+		}
+	});
+	Object.defineProperty(Array.prototype,'each',{
+		enumerable: false,
+		value: function(fn){
+			for(var i=0;i<this.length;i++){
+				fn.call(this[i],i);
 			}
 		}
-		return this;
-	};
-	Array.prototype.each = function(fn){
-		for(var i=0;i<this.length;i++){
-			fn.call(this[i],i);
-		}
-	};
-	global.extend = Object.prototype.extend;
+	});
 	global.extend({
 		global: new Prop({
 			get: function(){
