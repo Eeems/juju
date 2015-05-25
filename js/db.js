@@ -39,6 +39,18 @@
 					};
 				});
 			},
+			delete: function(name){
+				var req = indexedDB.deleteDatabase(name);
+				return new Promise(function(resolve,reject){
+					req.onsuccess = function(e){
+						resolve(e);
+						delete dbs[name];
+					};
+					req.onerror = function(e){
+						reject(e);
+					};
+				});
+			},
 			get: function(name){
 				return dbs[name];
 			},
@@ -132,6 +144,71 @@
 								.catch(function(e){
 									reject(e);
 								});
+						});
+					},
+					trunc: function(){
+						return new Promise(function(resolve,reject){
+							var req = self.store.clear();
+							req.onerror = function(e){
+								reject(e);
+								updatecount();
+							};
+							req.onsuccess = function(e){
+								resolve(e);
+								updatecount();
+							};
+						});
+					},
+					forEach: function(fn){
+						var req = self.store.openCursor();
+						return new Promise(function(resolve,reject){
+							req.onerror = function(e){
+								reject(e);
+								updatecount();
+							};
+							req.onsuccess = function(e){
+								var cursor = e.target.result;
+								if(cursor){
+									fn.call({
+											update: function(val){
+												var req = cursor.update(val);
+												return new Promise(function(resolve,reject){
+													req.onerror = function(e){
+														reject(e);
+														updatecount();
+													};
+													req.onsuccess = function(e){
+														resolve(e);
+														updatecount();
+													};
+												});
+											},
+											delete: function(){
+												var req = cursor.delete();
+												return new Promise(function(resolve,reject){
+													req.onerror = function(e){
+														reject(e);
+														updatecount();
+													};
+													req.onsuccess = function(e){
+														resolve(e);
+														updatecount();
+													};
+												});
+											},
+											key: cursor.key,
+											primaryKey: cursor.primaryKey,
+											direction: cursor.direction
+										},
+										cursor.value,
+										cursor.key
+									);
+									cursor.continue();
+								}else{
+									resolve(e);
+									updatecount();
+								}
+							};
 						});
 					}
 				});

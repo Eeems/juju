@@ -43,14 +43,25 @@ ready(function(){
 				{
 					id: 1,
 					value: 'testing'
+				},
+				{
+					id: 2,
+					value: 'something'
 				}
 			]
 		}
 	}).then(function(db){
-		db.table('test').get(0).then(function(val){
-			console.log(val);
-		}).catch(function(e){
-			console.trace(e);
+		db.table('test').forEach(function(item){
+			if(item.id === 0){
+				item.value = +new Date;
+				this.update(item).then(function(){
+					console.log(item);
+				});
+			}else if(item.id == 1){
+				this.delete(item);
+			}else{
+				console.log(item);
+			}
 		});
 	}).catch(function(e){
 		console.trace(e);
