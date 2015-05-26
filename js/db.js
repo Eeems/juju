@@ -2,6 +2,11 @@
 	var dbs = {};
 	global.extend({
 		db: new Module({
+			dbs: new Prop({
+				get: function(){
+					return dbs;
+				}
+			}),
 			setup: function(name,struct){
 				return new Promise(function(resolve,reject){
 					var req = indexedDB.open(name);
@@ -54,172 +59,16 @@
 			get: function(name){
 				return dbs[name];
 			},
-			Table: function(db,name){
-				var self = this,
-					count = 0,
-					updatecount = function(){
-						var req = self.store.count();
-						req.onsuccess = function(e){
-							count = e.target.result;
-						};
-					};
-				self.extend({
-					name: new Prop({
-						get: function(){
-							return name;
-						}
-					}),
-					count: new Prop({
-						get: function(){
-							return count;
-						}
-					}),
-					db: new Prop({
-						value: db,
-						writable: false
-					}),
-					store: new Prop({
-						get: function(){
-							return db.transaction.objectStore(name);
-						}
-					}),
-					keyPath: new Prop({
-						get: function(){
-							return self.store.keyPath;
-						}
-					}),
-					add: function(value){
-						var req = self.store.add(value);
-						return new Promise(function(resolve,reject){
-							req.onsuccess = function(e){
-								resolve(e);
-								updatecount();
-							};
-							req.onerror = function(e){
-								reject(e);
-								updatecount();
-							};
-						});
-					},
-					remove: function(index){
-						var req = self.store.delete(index);
-						return new Promise(function(resolve,reject){
-							req.onsuccess = function(e){
-								resolve(e);
-								updatecount();
-							};
-							req.onerror = function(e){
-								reject(e);
-								updatecount();
-							};
-						});
-					},
-					get: function(index){
-						var req = self.store.get(index);
-						return new Promise(function(resolve,reject){
-							req.onsuccess = function(e){
-								resolve(e.target.result);
-							};
-							req.onerror = function(e){
-								reject(e);
-							};
-						});
-					},
-					update: function(index,newval){
-						return new Promise(function(resolve,reject){
-							self.get(index)
-								.then(function(oldval){
-									var i,req;
-									for(i in newval){
-										oldval[i] = newval[i];
-									}
-									req = self.store.put(oldval);
-									req.onerror = function(e){
-										reject(e);
-									};
-									req.onsuccess = function(e){
-										resolve(e);
-									};
-								})
-								.catch(function(e){
-									reject(e);
-								});
-						});
-					},
-					trunc: function(){
-						return new Promise(function(resolve,reject){
-							var req = self.store.clear();
-							req.onerror = function(e){
-								reject(e);
-								updatecount();
-							};
-							req.onsuccess = function(e){
-								resolve(e);
-								updatecount();
-							};
-						});
-					},
-					forEach: function(fn){
-						var req = self.store.openCursor();
-						return new Promise(function(resolve,reject){
-							req.onerror = function(e){
-								reject(e);
-								updatecount();
-							};
-							req.onsuccess = function(e){
-								var cursor = e.target.result;
-								if(cursor){
-									fn.call({
-											update: function(val){
-												var req = cursor.update(val);
-												return new Promise(function(resolve,reject){
-													req.onerror = function(e){
-														reject(e);
-														updatecount();
-													};
-													req.onsuccess = function(e){
-														resolve(e);
-														updatecount();
-													};
-												});
-											},
-											delete: function(){
-												var req = cursor.delete();
-												return new Promise(function(resolve,reject){
-													req.onerror = function(e){
-														reject(e);
-														updatecount();
-													};
-													req.onsuccess = function(e){
-														resolve(e);
-														updatecount();
-													};
-												});
-											},
-											key: cursor.key,
-											primaryKey: cursor.primaryKey,
-											direction: cursor.direction
-										},
-										cursor.value,
-										cursor.key
-									);
-									cursor.continue();
-								}else{
-									resolve(e);
-									updatecount();
-								}
-							};
-						});
-					}
-				});
-				updatecount();
-				return self;
-			},
 			DB: function(db,struct){
 				var self = this,
 					i,
 					n;
 				self.extend({
+					path: new Prop({
+						get: function(){
+							return self.name;
+						}
+					}),
 					name: new Prop({
 						get: function(){
 							return db.name;
@@ -285,11 +134,262 @@
 					self.close();
 				});
 				return self;
-			}
-		}),
-		dbs: new Prop({
-			get: function(){
-				return dbs;
+			},
+			Table: function(db,name){
+				var self = this,
+					count = 0,
+					i,n,names;
+				self.extend({
+					path: new Prop({
+						get: function(){
+							return db.path+'.'+self.name;
+						}
+					}),
+					name: new Prop({
+						get: function(){
+							return name;
+						}
+					}),
+					count: new Prop({
+						get: function(){
+							return count;
+						}
+					}),
+					db: new Prop({
+						value: db,
+						writable: false
+					}),
+					indexes: {},
+					store: new Prop({
+						get: function(){
+							return db.transaction.objectStore(name);
+						}
+					}),
+					keyPath: new Prop({
+						get: function(){
+							return self.store.keyPath;
+						}
+					}),
+					fetch: function(){
+						var req = self.store.count();
+						req.onsuccess = function(e){
+							count = e.target.result;
+						};
+					},
+					add: function(value){
+						var req = self.store.add(value);
+						return new Promise(function(resolve,reject){
+							req.onsuccess = function(e){
+								resolve(e);
+								self.fetch();
+							};
+							req.onerror = function(e){
+								reject(e);
+								self.fetch();
+							};
+						});
+					},
+					remove: function(index){
+						var req = self.store.delete(index);
+						return new Promise(function(resolve,reject){
+							req.onsuccess = function(e){
+								resolve(e);
+								self.fetch();
+							};
+							req.onerror = function(e){
+								reject(e);
+								self.fetch();
+							};
+						});
+					},
+					get: function(index){
+						var req = self.store.get(index);
+						return new Promise(function(resolve,reject){
+							req.onsuccess = function(e){
+								resolve(e.target.result);
+							};
+							req.onerror = function(e){
+								reject(e);
+							};
+						});
+					},
+					update: function(index,newval){
+						return new Promise(function(resolve,reject){
+							self.get(index)
+								.then(function(oldval){
+									var i,req;
+									for(i in newval){
+										oldval[i] = newval[i];
+									}
+									req = self.store.put(oldval);
+									req.onerror = function(e){
+										reject(e);
+									};
+									req.onsuccess = function(e){
+										resolve(e);
+									};
+								})
+								.catch(function(e){
+									reject(e);
+								});
+						});
+					},
+					trunc: function(){
+						return new Promise(function(resolve,reject){
+							var req = self.store.clear();
+							req.onerror = function(e){
+								reject(e);
+								self.fetch();
+							};
+							req.onsuccess = function(e){
+								resolve(e);
+								self.fetch();
+							};
+						});
+					},
+					forEach: function(fn){
+						var req = self.store.openCursor();
+						return new Promise(function(resolve,reject){
+							req.onerror = function(e){
+								reject(e);
+								self.fetch();
+							};
+							req.onsuccess = function(e){
+								var cursor = e.target.result;
+								if(cursor){
+									fn.call(new global.db.CursorInterface(cursor,self.fetch),cursor.value,cursor.key);
+									cursor.continue();
+								}else{
+									resolve(e);
+									self.fetch();
+								}
+							};
+						});
+					},
+					index: function(name){
+						return self.indexes[name];
+					},
+					i: new Prop({
+						get: function(){
+							return self.indexes;
+						}
+					})
+				});
+				names = self.store.indexNames;
+				for(i=0;i<names.length;i++){
+					n = names[i];
+					self.indexes[n] = new global.db.Index(self,n);
+				}
+				self.fetch();
+				return self;
+			},
+			Index: function(table,name){
+				var self = this,
+					count = 0;
+				self.extend({
+					path: new Prop({
+						get: function(){
+							return table.path+'.'+self.name;
+						}
+					}),
+					name: new Prop({
+						get: function(){
+							return name;
+						}
+					}),
+					count: new Prop({
+						get: function(){
+							return count;
+						}
+					}),
+					table: new Prop({
+						value: table,
+						writable: false
+					}),
+					index: new Prop({
+						enumerable: false,
+						get: function(){
+							return table.store.index(name);
+						}
+					}),
+					db: new Prop({
+						get: function(){
+							return table.db;
+						}
+					}),
+					fetch: function(){
+						var req = self.index.count();
+						req.onsuccess = function(e){
+							count = e.target.result;
+						};
+					},
+					get: function(index){
+						var req = self.index.get(index);
+						return new Promise(function(resolve,reject){
+							req.onsuccess = function(e){
+								resolve(e.target.result);
+							};
+							req.onerror = function(e){
+								reject(e);
+							};
+						});
+					},
+					forEach: function(fn){
+						var req = self.index.openCursor();
+						return new Promise(function(resolve,reject){
+							req.onerror = function(e){
+								reject(e);
+								self.fetch();
+							};
+							req.onsuccess = function(e){
+								var cursor = e.target.result;
+								if(cursor){
+									fn.call(new global.db.CursorInterface(cursor,self.fetch),cursor.value,cursor.key);
+									cursor.continue();
+								}else{
+									resolve(e);
+									self.fetch();
+								}
+							};
+						});
+					}
+				});
+				self.fetch();
+				return self;
+			},
+			CursorInterface: function(cursor,fetch){
+				fetch = fetch===undefined?function(){}:fetch;
+				return new Module({
+					update: function(val){
+						var req = cursor.update(val);
+						return new Promise(function(resolve,reject){
+							req.onerror = function(e){
+								reject(e);
+								fetch();
+							};
+							req.onsuccess = function(e){
+								resolve(e);
+								fetch();
+							};
+						});
+					},
+					delete: function(){
+						var req = cursor.delete();
+						return new Promise(function(resolve,reject){
+							req.onerror = function(e){
+								reject(e);
+								fetch();
+							};
+							req.onsuccess = function(e){
+								resolve(e);
+								fetch();
+							};
+						});
+					},
+					key: cursor.key,
+					primaryKey: cursor.primaryKey,
+					direction: cursor.direction
+				});
 			}
 		})
 	});
