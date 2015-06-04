@@ -2,7 +2,7 @@
 	var fetch = global.fetch;
 	global.extend({
 		fetch: function(url,args){
-			if(fetch){
+			if(false/*fetch*/){
 				return fetch.call(global,url,args);
 			}else{
 				args = {
@@ -18,6 +18,9 @@
 				for(i in args.headers){
 					req.setRequestHeader(i,args.headers[i]);
 				}
+				if(['no-cache','reload','no-store'].indexOf(args.cache) != -1){
+					url = url+'#ts='+now;
+				}
 				req.open(args.method,url,true);
 				if(args.responseType!==''){
 					req.responseType = args.responseType;
@@ -29,40 +32,52 @@
 						var res = {
 								text: function(){
 									this.bodyUsed = true;
-									return req.responseText;
+									return new Promise(function(resolve){
+										resolve(req.responseText);
+									});
 								},
 								json: function(){
 									this.bodyUsed = true;
-									return req.responseType=='json'?req.response:JSON.parse(req.responseText);
+									return new Promise(function(resolve){
+										resolve(req.responseType=='json'?req.response:JSON.parse(req.responseText));
+									});
 								},
 								blob: function(){
 									this.bodyUsed = true;
-									return req.responseType=='blob'?req.response:new Blob(req.responseText);
+									return new Promise(function(resolve){
+										resolve(req.responseType=='blob'?req.response:new Blob(req.responseText));
+									});
 								},
 								arrayBuffer: function(){
 									this.bodyUsed = true;
+									var buf;
 									if(req.responseType=='arraybuffer'){
-										return req.response;
+										buf = req.response;
 									}else{
-										var buf = new ArrayBuffer(req.responseText.length*2),
-											bufView = new Uint16Array(buf),
+										buf = new ArrayBuffer(req.responseText.length*2);
+										var bufView = new Uint16Array(buf),
 											i;
 										for (i=0, strLen=req.responseText.length; i < strLen; i++) {
 											bufView[i] = req.responseText.charCodeAt(i);
 										}
 										return buf;
 									}
+									return new Promise(function(resolve){
+										resolve(buf);
+									});
 								},
 								formData: function(){
 									this.bodyUsed = true;
-									throw new Error('Not Implemented.');
+									return new Promise(function(resolve,reject){
+										reject(new Error('Not Implemented.'));
+									});
 								},
 								bodyUsed: false,
 								statusText: req.statusText,
 								status: req.status,
 								headers: (function(){
 									var a = req.getAllResponseHeaders().split("\n");
-									a.each(function(v,i,a){
+									a.forEach(function(v,i,a){
 										a[i] = v.split(':');
 									});
 									a = a.filter(function(v,i,a){
@@ -73,7 +88,7 @@
 											a.push([name,value]);
 										},
 										delete: function(){
-											a.each(function(v,i,a){
+											a.forEach(function(v,i,a){
 												if(v[0]==name){
 													a.splice(i,1);
 												}
@@ -88,7 +103,7 @@
 										},
 										getAll: function(name){
 											var h = [];
-											a.each(function(v){
+											a.forEach(function(v){
 												if(v[0]==name){
 													h.push(v[1]);
 												}

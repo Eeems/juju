@@ -1,6 +1,7 @@
 (function(global,undefined){
 	var Mouse = function(node){
 		var x,y,
+			self = this,
 			events = {
 				click: [],
 				up: [],
@@ -10,7 +11,7 @@
 				dblclick: [],
 				move: []
 			};
-		this.extend({
+		self.extend({
 			x: new Prop({
 				get: function(){
 					return x;
@@ -156,12 +157,28 @@
 			}
 		});
 		if(node.on){
+			node.on('click',function(e){
+				self.click(e);
+			});
+			node.on('dblclick',function(e){
+				self.dblclick(e);
+			});
+			node.on('mouseup',function(e){
+				self.up(e);
+			});
+			node.on('mousedown',function(e){
+				self.down(e);
+			});
+			node.on('mouseover',function(e){
+				self.over(e);
+			});
+			node.on('mouseout',function(e){
+				self.out(e);
+			});
 			node.on('mousemove',function(e){
 				x = e.clientX;
 				y = e.clientY;
-			});
-			node.on('click',function(e){
-				this.mouse.click(e);
+				self.move(e);
 			});
 		}
 		return this;

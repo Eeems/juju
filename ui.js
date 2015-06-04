@@ -1,4 +1,5 @@
 (function(global,undefined){
+	"use strict";
 	var uis = [],
 		fps = 0,
 		lasttime = now,
@@ -7,43 +8,91 @@
 			// Make sure that we are using a Nodes object
 			parent = parent instanceof Nodes?parent:dom.get(parent);
 			// Mouse handler. Or reuse if global
-			var cvs = canvas.get(name),
-				mouse = new Mouse(cvs);
-			parent.append(cvs).css({
-				overflow: 'hidden',
-				padding: 0,
-				margin: 0
-			}).on('resize',function(e){
-				cvs.width = parent.width();
-				cvs.height = parent.height();
-			}).fire('resize');
-			this.extend({
+			var self = this,
+				mouse = new Mouse(parent),
+				header = widget.new({type:'header'}),
+				nav = widget.new({type:'nav'}),
+				body = widget.new({type:'body'}),
+				footer = widget.new({type:'footer'}),
+				events = {
+					resize: []
+				};
+			parent.append(header.body)
+				.append(nav.body)
+				.append(body.body)
+				.append(footer.body)
+				.css({
+					overflow: 'hidden',
+					padding: 0,
+					margin: 0
+				})
+				.on('resize',function(e){
+					for(var i in events.resize){
+						events.resize.call(self,e);
+					}
+					body.height(
+						parent.height() - header.height() - nav.height() - footer.height()
+					);
+				})
+				.fire('resize');
+			self.extend({
 				mouse: new Prop({
 					get: function(){
 						return mouse;
 					}
 				}),
+				header: new Prop({
+					get: function(){
+						return header;
+					}
+				}),
+				nav: new Prop({
+					get: function(){
+						return nav;
+					}
+				}),
+				body: new Prop({
+					get: function(){
+						return body;
+					}
+				}),
+				empty: function(){
+					header.empty();
+					nav.empty();
+					body.empty();
+					footer.empty();
+					self.render();
+					return self;
+				},
+				footer: new Prop({
+					get: function(){
+						return footer;
+					}
+				}),
+				resize: function(fn){
+					if(fn instanceof Function){
+						events.resize.push(fn);
+					}else{
+						parent.fire('resize');
+					}
+				},
 				parent: new Prop({
 					get: function(){
 						return parent;
 					}
 				}),
-				canvas: new Prop({
-					get: function(){
-						return cvs;
-					}
-				}),
-				draw: function(){
-					this.canvas.draw();
-					return this;
+				render: function(){
+					header.render();
+					nav.render();
+					body.render();
+					footer.render();
+					self.resize();
+					return self;
 				},
 				'delete': function(){
-					try{
-						cvs.remove();
-					}catch(e){}
 					mouse = undefined;
-					cvs = undefined;
 					parent = undefined;
+					self = undefined;
 					for(var i in this){
 						try{
 							delete this[i];
@@ -56,24 +105,20 @@
 					}
 				}
 			});
-			uis.push(this);
-			return this;
+			uis.push(self);
+			self.render();
+			return self;
 		},
-		draw = function(){
+		frame = function(){
 			var time = now;
 			fps = (1000/(time - lasttime)).toFixed(2);
 			lasttime = time;
-			if(resize){
-				global.fire('optimizedResize');
-			}
 			if(page.visible){
-				for(var i=0;i<uis.length;i++){
-					try{
-						uis[i].draw();
-					}catch(e){}
+				if(resize){
+					global.fire('optimizedResize');
 				}
 			}
-			global.requestAnimationFrame(draw);
+			global.requestAnimationFrame(frame);
 		};
 	global.extend({
 		UserInterface: function(parent){
@@ -107,7 +152,8 @@
 				.width(viewport.width)
 				.height(viewport.height)
 				.fire('resize');
+			resize = false;
 		});
-		draw();
+		frame();
 	});
 })(window);
