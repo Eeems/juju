@@ -28,7 +28,7 @@
 				})
 				.on('resize',function(e){
 					for(var i in events.resize){
-						events.resize.call(self,e);
+						events.resize[i].call(self,e);
 					}
 					body.height(
 						parent.height() - header.height() - nav.height() - footer.height()
@@ -56,6 +56,23 @@
 						return body;
 					}
 				}),
+				reset: function(){
+					header.body.remove();
+					nav.body.remove();
+					body.body.remove();
+					footer.body.remove();
+					header = widget.new({type:'header'});
+					nav = widget.new({type:'nav'});
+					body = widget.new({type:'body'});
+					footer = widget.new({type:'footer'});
+					parent.append(header.body)
+						.append(nav.body)
+						.append(body.body)
+						.append(footer.body);
+					parent.off();
+					self.render();
+					return self;
+				},
 				empty: function(){
 					header.empty();
 					nav.empty();
@@ -75,6 +92,11 @@
 					}else{
 						parent.fire('resize');
 					}
+					return self;
+				},
+				off: function(){
+					events.resize = [];
+					return self;
 				},
 				parent: new Prop({
 					get: function(){

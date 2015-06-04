@@ -33,6 +33,8 @@
 						}
 					}
 					props.init.call(widget,config);
+					widget.css = config.css===undefined?{}:config.css;
+					widget.attributes = config.attributes===undefined?{}:config.attributes;
 					return widget;
 				}
 			});
@@ -89,13 +91,20 @@
 					return ret(this.body.width.apply(this.body,arguments));
 				},
 				render: function(){
+					var i;
 					if(body){
-						body.drop('*');
+						body.drop('*').off();
 					}else{
 						body = dom.create(this.tagName);
 					}
+					body.css(self.css).attr(self.attributes);
+					if(props.events !== undefined){
+						for(i in props.events){
+							body.on(i,props.events[i]);
+						}
+					}
 					if(widgets.length>0){
-						for(var i in widgets){
+						for(i in widgets){
 							widgets[i].render();
 							body.append(widgets[i].body);
 						}
