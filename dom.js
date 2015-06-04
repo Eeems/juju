@@ -87,6 +87,7 @@
 							fn.call(this[i],i);
 						}
 					}
+					return self;
 				},
 				append: function(){
 					var args = flatten(Array.slice(arguments)),
