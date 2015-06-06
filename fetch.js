@@ -2,7 +2,7 @@
 	var fetch = global.fetch;
 	global.extend({
 		fetch: function(url,args){
-			if(fetch){
+			if(fetch && global.settings.fetch.native){
 				return fetch.call(global,url,args);
 			}else{
 				args = {

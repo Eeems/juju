@@ -42,6 +42,12 @@
 			}
 		}
 	});
+	Object.defineProperty(Array.prototype,'insert',{
+		enumerable: false,
+		value: function(id,value){
+			this.splice(id,0,value);
+		}
+	});
 	global.extend({
 		global: new Prop({
 			get: function(){
@@ -62,7 +68,10 @@
 				},0);
 		},
 		settings: {
-			debug: true
+			debug: true,
+			fetch: {
+				native: false
+			}
 		},
 		flatten: function(arr){
 			var out = [],
