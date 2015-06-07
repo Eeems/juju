@@ -55,6 +55,9 @@
 				}),
 				values: new Prop({
 					get: function(){
+						if(!(values instanceof Array)){
+							values = [];
+						}
 						return values;
 					},
 					set: function(vals){
@@ -155,7 +158,7 @@
 					}
 				}
 			}
-			stores['name'] = self;
+			stores[name] = self;
 			return self;
 		},
 		store: function(name){
