@@ -81,6 +81,16 @@
 						return list;
 					}
 				}),
+				value: new Prop({
+					get: function(){
+						return this[0].value;
+					},
+					set: function(val){
+						this.each(function(){
+							this.value = val;
+						});
+					}
+				}),
 				each: function(fn){
 					for(var i =0;i<this.length;i++){
 						if(this[i]!==undefined){
@@ -164,6 +174,16 @@
 						return this;
 					}else{
 						return this[0].textContent;
+					}
+				},
+				val: function(val){
+					if(val!==undefined){
+						this.each(function(){
+							this.value = val;
+						});
+						return this;
+					}else{
+						return this[0].value;
 					}
 				},
 				html: function(html){
