@@ -129,10 +129,14 @@
 					return self;
 				},
 				rollback: function(){
-					values = localStorage.getItem(self.id);
-					try{
-						values = JSON.parse(values);
-					}catch(e){
+					if(config.persist){
+						values = localStorage.getItem(self.id);
+						try{
+							values = JSON.parse(values);
+						}catch(e){
+							values = [];
+						}
+					}else{
 						values = [];
 					}
 					return self;
@@ -149,10 +153,12 @@
 				json = localStorage.getItem(self.id);
 				try{
 					values = JSON.parse(json);
+					console.log('Loaded persistant values for store '+self.name);
 				}catch(e){
 					values = [];
+					console.log('Initialized persistant values forstore '+self.name);
 				}
-				if(config.autoflush){
+				if(config.autocommit){
 					if(global instanceof Window){
 						global.addEventListener('beforeunload',self.commit);
 					}

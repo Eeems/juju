@@ -143,6 +143,38 @@
 				method: 'post',
 				body: body
 			},callback);
+		},
+		RequirePromise: function(fn){
+			var p = new Promise(fn);
+			p.extend({
+				and: function(url){
+					return new RequirePromise(function(resolve,reject){
+						require(url).then(function(){
+								resolve();
+							})
+						.catch(reject);
+					});
+				}
+			});
+			return p;
+		},
+		require: function(url){
+			return new RequirePromise(function(resolve,reject){
+				global.fetch(url,{cache:'no-cache'}).then(function(res){
+					return new RequirePromise(function(resolve,reject){
+						res.text().then(function(text){
+							try{
+								(new Function(text))();
+								resolve();
+							}catch(e){
+								reject(e);
+							}
+						});
+					});
+				}).catch(function(e){
+					reject(e);
+				});
+			});
 		}
 	});
 })(window);
