@@ -7,40 +7,71 @@
 					return dbs;
 				}
 			}),
-			setup: function(name,struct){
+			setup: function(name,struct,version){
+				console.log('Setting up db '+name+' for version '+version);
 				return new Promise(function(resolve,reject){
-					var req = indexedDB.open(name);
-					req.onupgradeneeded = function(e){
-						var i,ii,table,ostore,index;
-						for(i in struct){
-							table = struct[i];
-							ostore = e.target.result.createObjectStore(i,table.config);
-							if(table.indexes){
-								for(ii in table.indexes){
-									index = table.indexes[ii];
-									ostore.createIndex(ii,index.path,index.config);
-								}
+					var req = indexedDB.open(name,version),
+						getDb = function(DB){
+							var db;
+							if(dbs[name]){
+								db = dbs[name];
+								db.db = DB;
+							}else{
+								db = new global.db.DB(DB,struct);
 							}
-							if(table.values){
-								ostore.transaction.oncomplete = function(){
-									ostore = e.target.result.transaction(i,'readwrite').objectStore(i);
-									table.values.forEach(function(value){
-										ostore.add(value);
-									});
-								};
-							}
-						}
-					};
-					req.onsuccess = function(e){
-						var db = new global.db.DB(e.target.result,struct);
-						dbs[name] = db;
-						resolve(db);
-					};
+							resolve(db);
+						};
 					req.onerror = function(e){
 						reject(e);
 					};
 					req.onblocked = function(e){
 						reject(e);
+					};
+					req.onupgradeneeded = function(e){
+						var i,
+							ii,
+							table,
+							ostore,
+							index,
+							t = e.target.result,
+							oncomplete = function(){
+								ostore = e.target.result.transaction(i,'readwrite').objectStore(i);
+								table.values.forEach(function(value){
+									ostore.add(value);
+								});
+							};
+						for(i in struct){
+							if(!t.objectStoreNames.contains(i)){
+								table = struct[i];
+								ostore = t.createObjectStore(i,table.config);
+								if(table.indexes){
+									for(ii in table.indexes){
+										if(!ostore.indexNames.contains(ii)){
+											index = table.indexes[ii];
+											ostore.createIndex(ii,index.path,index.config);
+										}								}
+								}
+								if(table.values){
+									tr = ostore.transaction;
+									tr.oncomplete = oncomplete;
+									tr.onerror = req.onerror;
+								}
+							}
+						}
+					};
+					req.onsuccess = function(e){
+						var DB =e.target.result;
+						if(typeof DB.setVersion==='function'){
+							var req = DB.setVersion(version);
+							req.onerror = function(e){
+								reject(e);
+							};
+							req.onsuccess(function(e){
+								getDb(e.target.result);
+							});
+						}else{
+							getDb(DB);
+						}
 					};
 				});
 			},
@@ -60,9 +91,11 @@
 				return dbs[name];
 			},
 			DB: function(db,struct){
-				var self = this,
+				var name = db.name,
+					self = this,
 					i,
 					n;
+				console.log('Creating new db interface with name '+name);
 				self.extend({
 					path: new Prop({
 						get: function(){
@@ -71,7 +104,7 @@
 					}),
 					name: new Prop({
 						get: function(){
-							return db.name;
+							return name;
 						}
 					}),
 					version: new Prop({
@@ -97,6 +130,13 @@
 						enumerable: false,
 						get: function(){
 							return db;
+						},
+						set: function(val){
+							if(val.name == name){
+								db = val;
+							}else{
+								throw new Error('Invalid db being switched to. '+val.name+' is not the same as '+name);
+							}
 						}
 					}),
 					struct: new Prop({
@@ -130,9 +170,12 @@
 					n = db.objectStoreNames[i];
 					self.tables[n] = new global.db.Table(self,n);
 				}
-				addEventListener('beforeunload',function(){
-					self.close();
-				});
+				if(global instanceof Window){
+					addEventListener('beforeunload',function(){
+						self.close();
+					});
+				}
+				dbs[db.name] = self;
 				return self;
 			},
 			Table: function(db,name){
@@ -264,6 +307,11 @@
 									self.fetch();
 								}
 							};
+						});
+					},
+					each: function(fn){
+						return self.forEach(function(v,i){
+							fn.call(v,i);
 						});
 					},
 					index: function(name){

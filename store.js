@@ -6,24 +6,367 @@
 				throw new Error('Store '+name+' already exists!');
 			}
 			config = config?config:{};
-			if(config.persist===undefined){
-				config.persist = true;
+			if(config.engine===undefined){
+				config.engine = 'localStorage';
 			}
 			if(config.autocommit===undefined){
 				config.autocommit = true;
 			}
 			var self = this,
-				values = [],
-				lastId,
 				flush = function(){
 					if(config.autocommit){
 						self.commit();
 					}
-				};
+				},
+				StorePromise = function(callback){
+					var p = new Promise(function(){
+							var scope = this,
+								args = arguments,
+								fn = function(){
+									var d = db.get(self.id);
+									if(d){
+										callback.apply(scope,args);
+									}else{
+										setTimeout(fn,10);
+									}
+								};
+							fn();
+						}),
+						i,
+						proxy = function(i){
+							p[i] = function(){
+								return self[i].apply(self,arguments);
+							};
+						},
+						names = [
+							'add',
+							'remove',
+							'get',
+							'update',
+							'forEach',
+							'each',
+							'trunc',
+							'commit',
+							'rollback'
+						];
+					for(i in names){
+						proxy(names[i]);
+					}
+					return p;
+				},
+				TablePromise = function(){
+					var table,
+						p = new Promise(function(resolve,reject){
+							var fn = function(){
+								var d = db.get(self.id);
+								if(d){
+									var t = d.table(self.id);
+									if(t){
+										resolve(t);
+									}else{
+										reject();
+									}
+								}else{
+									setTimeout(fn,10);
+								}
+							};
+							fn();
+						}),
+						i,
+						proxy = function(i){
+							p[i] = function(){
+								var args = arguments,
+									scope = this;
+								return this.then(function(table){
+									console.log(i,scope,args);
+									return table[i].apply(scope,args);
+								});
+							};
+						},
+						names = [
+							'add',
+							'remove',
+							'get',
+							'update',
+							'forEach',
+							'each',
+							'trunc'
+						];
+					for(i in names){
+						proxy(names[i]);
+					}
+					return p;
+				},
+				engine = (function(){
+					var values = [],
+						e = {
+								dirty: false,
+								add: function(v){
+									return new StorePromise(function(resolve){
+										values.push(v);
+										resolve();
+									});
+								},
+								remove: function(i){
+									return new StorePromise(function(resolve,reject){
+										if(values[i]){
+											delete values[i];
+											resolve();
+										}else{
+											reject();
+										}
+									});
+								},
+								get: function(i){
+									return new StorePromise(function(resolve,reject){
+										if(values[i]){
+											resolve(values[i]);
+										}else{
+											reject();
+										}
+									});
+								},
+								update: function(i,v){
+									return new StorePromise(function(resolve,reject){
+										if(values[i]){
+											values[i] = v;
+											resolve();
+										}else{
+											reject();
+										}
+									});
+								},
+								forEach: function(fn){
+									return new StorePromise(function(resolve){
+										for(var i in values){
+											fn.call(self,i,values[i]);
+										}
+										resolve();
+									});
+								},
+								each: function(fn){
+									return e.forEach(fn);
+								},
+								trunc: function(){
+									return new StorePromise(function(resolve){
+										values = [];
+										resolve();
+									});
+								},
+								commit: function(){
+									return new StorePromise(function(resolve){
+										resolve();
+									});
+								},
+								rollback: function(){
+									return new StorePromise(function(resolve){
+										resolve();
+									});
+								},
+								indexOf: function(data){
+									return new StorePromise(function(resolve){
+										resolve(values.indexOf(data));
+									});
+								},
+								has: function(data){
+									return new StorePromise(function(resolve){
+										e.indexOf(data)
+											.then(function(i){
+												resolve(i!=-1);
+											});
+									});
+								}
+							};
+					switch(config.engine){
+						case 'localStorage':
+							e.extend({
+								dirty: new Prop({
+									get: function(){
+										return JSON.stringify(values) != localStorage.getItem(self.id);
+									}
+								}),
+								commit: function(){
+									return new StorePromise(function(resolve){
+										localStorage.storeItem(self.id,JSON.stringify(values));
+										resolve();
+									});
+								},
+								rollback: function(){
+									return new StorePromise(function(resolve){
+										values = localStorage.getItem(self.id);
+										try{
+											values = JSON.parse(values);
+											resolve();
+										}catch(e){
+											values = [];
+											reject();
+										}
+									});
+								}
+							});
+						break;
+						case 'indexedDB':
+							db.setup('juju-store-'+name,(function(){
+								var conf = {};
+								conf['juju-store-'+name] = {
+									config: {
+										autoIncrement: true,
+										keyPath: 'id'
+									},
+									indexes: {
+										id: {
+											path: 'id',
+											unique: true
+										}
+									}
+								};
+								return conf;
+							})(),+new Date);
+							e.extend({
+								dirty: new Prop({
+									get: function(){
+										return values.length>0;
+									}
+								}),
+								table: new Prop({
+									get: function(){
+										return new TablePromise();
+									}
+								}),
+								add: function(v){
+									return new StorePromise(function(resolve){
+										values.push({
+											type: 'add',
+											data: v
+										});
+										resolve();
+									});
+								},
+								remove: function(i){
+									return new StorePromise(function(resolve,reject){
+										values.push({
+											type: 'remove',
+											index: i
+										});
+										resolve();
+									});
+								},
+								get: function(i){
+									return new StorePromise(function(resolve,reject){
+										e.table.get(i)
+											.then(resolve)
+											.catch(reject);
+									});
+								},
+								update: function(i,v){
+									v.extend({
+										id: i
+									});
+									return new StorePromise(function(resolve,reject){
+										values.push({
+											type: 'update',
+											index: i,
+											data: v
+										});
+										resolve();
+									});
+								},
+								forEach: function(fn){
+									return new StorePromise(function(resolve,reject){
+										e.table.forEach(fn)
+											.then(resolve)
+											.catch(reject);
+									});
+								},
+								each: function(fn){
+									return e.forEach(fn);
+								},
+								trunc: function(){
+									return new StorePromise(function(resolve){
+										values.push({
+											type: 'trunc'
+										});
+										resolve();
+									});
+								},
+								commit: function(){
+									return new StorePromise(function(resolve,reject){
+										if(e.dirty){
+											var item = values.shift();
+											switch(item.type){
+												case 'add':
+													e.table.add(item.data)
+														.then(e.commit)
+														.catch(reject);
+												break;
+												case 'remove':
+													e.table.remove(item.index)
+														.then(e.commit)
+														.catch(reject);
+												break;
+												case 'update':
+													e.table.update(item.index,item.data)
+														.then(e.commit)
+														.catch(reject);
+												break;
+												case 'trunc':
+													e.table.trunc()
+														.then(e.commit)
+														.catch(reject);
+												break;
+												default:
+													reject();
+											}
+										}else{
+											e.rollback();
+											resolve();
+										}
+									});
+								},
+								rollback: function(){
+									return new StorePromise(function(resolve){
+										values = [];
+										resolve();
+									});
+								},
+								indexOf: function(data){
+									var id;
+									return new StorePromise(function(resolve){
+										if(data.id!==undefined){
+											e.get(data.id)
+												.then(function(){
+
+												}).catch(function(){
+													resolve(-1);
+												});
+										}else{
+											e.forEach(function(d,i){
+												if(!id){
+													for(var ii in data){
+														if(d[ii] != data[ii]){
+															return;
+														}
+														id = d.id;
+													}
+												}
+											}).then(function(){
+												id = id===undefined?-1:id;
+												resolve(id);
+											}).catch(function(){
+												resolve(-1);
+											});
+										}
+									});
+								}
+							});
+						break;
+					}
+					return e;
+				})();
 			self.extend({
 				id: new Prop({
 					readonly: true,
-					value: 'juju-store-'+(config.persist?'persist':'session')+'-'+name
+					value: 'juju-store-'+name
 				}),
 				name: new Prop({
 					readonly: true,
@@ -33,119 +376,70 @@
 					readonly: true,
 					value: config
 				}),
+				engine: new Prop({
+					get: function(){
+						return engine;
+					}
+				}),
 				length: new Prop({
 					get: function(){
 						return values.length;
 					}
 				}),
-				lastId: new Prop({
-					get: function(){
-						return lastId;
-					}
-				}),
-				json: new Prop({
-					get: function(){
-						return JSON.stringify(values);
-					}
-				}),
 				dirty: new Prop({
 					get: function(){
-						return self.json!=localStorage.getItem(self.id);
-					}
-				}),
-				values: new Prop({
-					get: function(){
-						if(!(values instanceof Array)){
-							values = [];
-						}
-						return values;
-					},
-					set: function(vals){
-						values = vals;
-						lastId = vals.length-1;
-						flush();
+						return engine.dirty;
 					}
 				}),
 				push: function(value){
-					lastId = values.push(value)-1;
-					flush();
-					return self;
+					return engine.add(value).then(function(){
+						flush();
+						return arguments;
+					});
 				},
 				insert: function(id,value){
-					lastId = id;
-					values.insert(id,value);
-					return self;
+					return engine.update(id,value).then(function(){
+						flush();
+						return arguments;
+					});
 				},
 				replace: function(id,value){
-					lastId = id;
-					values.splice(id,1,value);
-					flush();
-					return self;
-				},
-				pop: function(){
-					if(lastId==values.length-1){
-						lastId = 0;
-					}
-					var r = values.pop();
-					flush();
-					return r;
-				},
-				shift: function(){
-					if(lastId!==0){
-						lastId--;
-					}
-					var r = values.shift();
-					flush();
-					return r;
+					return engine.update(id,value).then(function(){
+						flush();
+						return arguments;
+					});
 				},
 				unshift: function(value){
-					lastId++;
 					values.unshift(value);
 					flush();
 					return self;
 				},
 				remove: function(id){
-					if(id == lastId){
-						lastId = 0;
-					}else if(id<lastId){
-						lastId--;
-					}
-					values.splice(id,1);
-					flush();
-					return self;
+					return engine.delete(id).then(function(){
+						flush();
+						return arguments;
+					});
 				},
 				indexOf: function(value){
-					return values.indexOf(value);
+					return e.indexOf(value);
 				},
 				has: function(value){
-					return self.indexOf(value)!=-1;
+					return e.has(value);
 				},
 				get: function(id){
 					return values[id];
 				},
 				each: function(fn){
-					values.each(fn);
-					lastId = values.length-1;
-					return self;
+					return engine.each(fn).then(function(){
+						flush();
+						return arguments;
+					});
 				},
 				rollback: function(){
-					if(config.persist){
-						values = localStorage.getItem(self.id);
-						try{
-							values = JSON.parse(values);
-						}catch(e){
-							values = [];
-						}
-					}else{
-						values = [];
-					}
-					return self;
+					return engine.rollback();
 				},
 				commit: function(){
-					if(config.persist){
-						localStorage.setItem(self.id,self.json);
-					}
-					return self;
+					return engine.commit();
 				}
 
 			});
@@ -176,7 +470,7 @@
 		}
 	});
 	if(global instanceof Window){
-		global.addEventListener('storage',function(e){
+		addEventListener('storage',function(e){
 			for(var i in stores){
 				if(stores[i].id == e.key){
 					console.log(e);
