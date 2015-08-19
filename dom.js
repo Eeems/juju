@@ -1,5 +1,24 @@
 (function(global,undefined){
 	"use strict";
+	// Enhance DOMTokenList, NodeList and HTMLCollection
+	[
+		'forEach',
+		'map',
+		'filter',
+		'reduce',
+		'reduceRight',
+		'every',
+		'some',
+		'push',
+		'pop',
+		'slice',
+		'shift',
+		'unshift',
+		'indexOf'
+	].forEach(function(p){
+		NodeList.prototype[p] = HTMLCollection.prototype[p] = Array.prototype[p];
+	});
+	DOMTokenList.prototype.indexOf = Array.prototype.indexOf;
 	global.extend({
 		Nodes: function(){
 			var i,
