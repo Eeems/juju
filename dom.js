@@ -102,7 +102,7 @@
 				}),
 				value: new Prop({
 					get: function(){
-						return this[0].value;
+						return this.length>0?this[0].value:null;
 					},
 					set: function(val){
 						this.each(function(){
