@@ -260,6 +260,7 @@
 						return new Promise(function(resolve,reject){
 							self.get(index)
 								.then(function(oldval){
+									oldval = oldval || {};
 									var i,req;
 									for(i in newval){
 										oldval[i] = newval[i];

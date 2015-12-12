@@ -70,7 +70,7 @@
 		settings: {
 			debug: true,
 			fetch: {
-				native: false
+				native: true
 			}
 		},
 		flatten: function(arr){
