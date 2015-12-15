@@ -1,0 +1,6 @@
+{
+	"name": "juju",
+	"fetch": {
+		"native": true
+	}
+}
