@@ -1,6 +1,46 @@
 {
 	"name": "juju",
-	"fetch": {
-		"native": true
-	}
+	"version": "0.0.1",
+	"settings": {
+		"debug": true,
+		"fetch": {
+			"log": {
+				"require": true,
+				"get": true,
+				"post": true
+			},
+			"native": true
+		},
+		"widget": {
+			"log": {
+				"require": false
+			}
+		},
+		"log": {
+			"ready": true
+		}
+	},
+	"init": "app.js",
+	"include": [
+		"lib/dom.js",
+		"lib/canvas.js",
+		"lib/keyboard.js",
+		"lib/mouse.js",
+		"lib/page.js",
+		"lib/socket.js",
+		"lib/db.js",
+		"lib/cookie.js",
+		"lib/widget.js"
+	],
+	"widgets": [
+		"header",
+		"nav",
+		"section",
+		"footer",
+		"link",
+		"input",
+		"text",
+		"button",
+		"save"
+	]
 }
