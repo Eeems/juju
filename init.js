@@ -38,7 +38,7 @@
 							console.groupEnd();
 							console.group('Require.widget');
 							console.time('Require.widget');
-							return widget.require(json.widgets)
+							return widget.require(json.widgets);
 						});
 				})
 				.then(function(){
