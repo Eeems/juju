@@ -30,7 +30,8 @@
 		"lib/socket.js",
 		"lib/db.js",
 		"lib/cookie.js",
-		"lib/widget.js"
+		"lib/widget.js",
+		"lib/view.js"
 	],
 	"widgets": [
 		"header",
@@ -42,5 +43,8 @@
 		"text",
 		"button",
 		"save"
+	],
+	"views": [
+		"main"
 	]
 }

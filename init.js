@@ -39,10 +39,17 @@
 							console.group('Require.widget');
 							console.time('Require.widget');
 							return widget.require(json.widgets);
+						})
+						.then(function(){
+							console.timeEnd('Require.widget');
+							console.groupEnd();
+							console.group('Require.view');
+							console.time('Require.view');
+							return view.require(json.views);
 						});
 				})
 				.then(function(){
-					console.timeEnd('Require.widget');
+					console.timeEnd('Require.view');
 					console.groupEnd();
 					console.groupEnd();
 					console.timeEnd('Init');
