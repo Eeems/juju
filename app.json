@@ -42,7 +42,8 @@
 		"input",
 		"text",
 		"button",
-		"save"
+		"save",
+		"div"
 	],
 	"views": [
 		"main"
