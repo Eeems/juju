@@ -9,7 +9,7 @@
 				"get": true,
 				"post": true
 			},
-			"native": true
+			"native": false
 		},
 		"widget": {
 			"log": {
@@ -30,6 +30,7 @@
 		"lib/socket.js",
 		"lib/db.js",
 		"lib/cookie.js",
+		"lib/model.js",
 		"lib/widget.js",
 		"lib/view.js"
 	],
